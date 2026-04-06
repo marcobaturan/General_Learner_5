@@ -323,7 +323,7 @@ class GeneralLearnerApp:
         # 4. POV (3D Raycasting)
         if self.show_pov:
             # Position at the far right
-            pov_rect = pygame.Rect(WINDOW_WIDTH - POV_WIDTH - 20, 150, POV_WIDTH, 400)
+            pov_rect = pygame.Rect(WINDOW_WIDTH - POV_WIDTH - 10, 150, POV_WIDTH, 400)
             graphics.draw_raycast_view(self.screen, pov_rect, self.robot, self.env)
  
         # 4. HUD Stats & Agenda
