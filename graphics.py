@@ -164,3 +164,84 @@ def draw_situational_network(screen, rect, nodes, edges):
     node_size = 30
     for node_id, (nx, ny) in node_pos.items():
         draw_mini_perception(screen, nx - node_size//2, ny - node_size//2, node_size, node_id)
+
+def draw_raycast_view(screen, rect, robot, env):
+    """
+    Renders a pseudo-3D scene using Ray Casting from the robot's perspective.
+    """
+    import math
+    pygame.draw.rect(screen, BLACK, rect) # Ceiling/Background
+    # Ground color
+    pygame.draw.rect(screen, (30, 30, 35), (rect.x, rect.y + rect.height//2, rect.width, rect.height//2))
+    pygame.draw.rect(screen, CYAN, rect, 2) # Border
+
+    # 1. Map direction to Radians
+    # DIR_N: -pi/2, DIR_E: 0, DIR_S: pi/2, DIR_W: pi
+    base_angle = 0
+    if robot.direction == DIR_N: base_angle = -math.pi/2
+    elif robot.direction == DIR_E: base_angle = 0
+    elif robot.direction == DIR_S: base_angle = math.pi/2
+    elif robot.direction == DIR_W: base_angle = math.pi
+
+    fov = math.pi / 3 # 60 degrees
+    half_fov = fov / 2
+    num_rays = rect.width // 2 # Resolution skip for performance
+    delta_angle = fov / num_rays
+    
+    # Starting ray angle
+    ray_angle = base_angle - half_fov
+    
+    # 2. Iterate through screen horizontal columns
+    for i in range(num_rays):
+        # Step small increments along the ray
+        step = 0.05
+        max_dist = 12.0
+        dist = 0
+        hit = False
+        hit_obj = EMPTY_ID
+
+        # Ray Vector
+        sin_a = math.sin(ray_angle)
+        cos_a = math.cos(ray_angle)
+
+        while dist < max_dist and not hit:
+            dist += step
+            # Projection in grid coords
+            rx = robot.x + 0.5 + cos_a * dist
+            ry = robot.y + 0.5 + sin_a * dist
+            
+            # Boundary/Collision check
+            if 0 <= rx < GRID_W and 0 <= ry < GRID_H:
+                obj = env.get_at(int(rx), int(ry))
+                if obj == WALL_ID or obj == BATTERY_ID:
+                    hit = True
+                    hit_obj = obj
+            else:
+                hit = True # Out of bounds is wall-like
+                hit_obj = WALL_ID
+
+        # 3. Project to 2D
+        # Fisheye correction
+        dist = dist * math.cos(ray_angle - base_angle)
+        
+        # Line height calculation
+        proj_h = (1.0 / (dist + 0.1)) * rect.height * 0.8
+        if proj_h > rect.height: proj_h = rect.height
+        
+        # Vertical column rendering
+        y1 = rect.y + rect.height // 2 - proj_h // 2
+        
+        # Color & Shading
+        brightness = max(0, 255 - int(dist * 20))
+        color = (brightness, brightness, brightness)
+        if hit_obj == BATTERY_ID:
+            color = (0, brightness, 0) # Green battery pillars
+
+        pygame.draw.rect(screen, color, (rect.x + i*2, y1, 2, proj_h))
+        
+        ray_angle += delta_angle
+
+    # HUD label
+    font = pygame.font.SysFont('Arial', 14)
+    lbl = font.render(" POV - ROBOT VISION", True, WHITE)
+    screen.blit(lbl, (rect.x + 5, rect.y + 5))
