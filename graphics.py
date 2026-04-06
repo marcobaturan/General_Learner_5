@@ -79,3 +79,41 @@ class TextBox:
         pygame.draw.rect(screen, BLACK, self.rect, 2)
         txt_surf = self.font.render(self.text, True, BLACK)
         screen.blit(txt_surf, (self.rect.x + 5, self.rect.y + 10))
+
+def draw_scaled_plot(screen, rect, data, color, title, label_y):
+    """
+    Draws a simple line chart within a given Rect based on a list of numeric data.
+    """
+    pygame.draw.rect(screen, (20, 20, 25), rect) # Dark background for the chart
+    pygame.draw.rect(screen, DARK_GRAY, rect, 2)  # Container border
+    
+    font = pygame.font.SysFont('Arial', 14)
+    tit_surf = font.render(title, True, WHITE)
+    screen.blit(tit_surf, (rect.x + 5, rect.y + 5))
+
+    if len(data) < 2:
+        return
+
+    # Scaling logic
+    max_val = max(data) if max(data) > 0 else 1
+    min_val = min(data)
+    
+    points = []
+    margin = 20
+    plot_w = rect.width - (margin * 2)
+    plot_h = rect.height - (margin * 2) - 10
+    
+    for i, val in enumerate(data):
+        x = rect.x + margin + (i / (len(data)-1)) * plot_w
+        # Invert Y for screen coordinates
+        y = rect.y + rect.height - margin - ((val - min_val) / (max_val - min_val + 1e-5)) * plot_h
+        points.append((x, y))
+
+    if len(points) >= 2:
+        pygame.draw.lines(screen, color, False, points, 2)
+    
+    # Draw Y labels
+    min_surf = font.render(str(int(min_val)), True, DARK_GRAY)
+    max_surf = font.render(str(int(max_val)), True, DARK_GRAY)
+    screen.blit(min_surf, (rect.x + 5, rect.y + rect.height - 18))
+    screen.blit(max_surf, (rect.x + 5, rect.y + 20))

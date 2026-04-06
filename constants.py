@@ -8,9 +8,11 @@ CELL_SIZE = 40
 # Window regions
 CANVAS_WIDTH = GRID_W * CELL_SIZE
 CANVAS_HEIGHT = GRID_H * CELL_SIZE
+WINDOW_WIDTH = 1100 # Enlarged for reporting dashboard
+WINDOW_HEIGHT = 600
 PANEL_WIDTH = 300
-WINDOW_WIDTH = CANVAS_WIDTH + PANEL_WIDTH
-WINDOW_HEIGHT = 600 # Larger window for buttons
+REPORT_WIDTH = 400
+CANVAS_WIDTH = 400
 
 # Colors
 BLACK = (0, 0, 0)
@@ -22,8 +24,11 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 ORANGE = (255, 165, 0)
-YELLOW = (255, 255, 0)
+LIGHT_ORANGE = (255, 220, 150)
 PINK = (255, 182, 193)  # Light pink for guide path
+CYAN = (0, 255, 255)
+PURPLE = (160, 32, 240)
+YELLOW = (255, 255, 0)
 
 # IDs for elements on the grid
 EMPTY_ID = 0
@@ -41,5 +46,5 @@ BTN_HEIGHT = 40
 BTN_MARGIN = 5
 
 # Need thresholds
-TIREDNESS_MAX = 50 
-HUNGER_MAX = 50
+TIREDNESS_MAX = 150 
+HUNGER_MAX = 150

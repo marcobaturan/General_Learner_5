@@ -2,61 +2,45 @@
 
 ![Project Preview](preview.png)
 
-An implementation of the **Universal Learner** concept based on the theories of Fritz et al. (1989). This simulation explores autonomous learning in a restricted environment where a robot must manage internal needs (energy/tiredness) while learning spatial-temporal patterns through reinforcement.
+An implementation of the **Universal Learner** concept based on the theories of Fritz et al. (1989). This simulation explores autonomous learning, situational awareness, and goal-oriented planning in a restricted 2D grid world.
 
-## Core Features
+## 🚀 Key Features
 
-- **Autonomous Sequential Learning**: The robot associates perceptions (vision/touch) with actions and rewards.
-- **Episodic Memory**: Experiences are stored chronologically in a SQLite database.
-- **Dream/Sleep Consolidation**: During sleep cycles, the system generalizes experiences, transforming chronological memory into abstract and composite rules.
-- **Bimodal Operation**:
-  - **Autonomous Mode**: The robot explores and acts based on its learned knowledge.
-  - **Command Mode**: Allows manual control and direct textual reinforcement.
-- **Guide Mode**: A vicarious learning feature where users "draw" a path for the robot to teach it successful navigation strategies.
+- **Autonomous Planning**: The robot doesn't just react to immediate stimuli; it uses BFS-based planning to find sequences of actions that lead to known rewards (Batteries).
+- **Homeostatic Regulation**: The agent is driven by internal needs (Hunger and Tiredness). Tiredness triggers a "Dreaming" phase where episodic memories are consolidated into semantic rules.
+- **Vicarious Learning (Guide Mode)**: Users can manually "teach" the robot by clicking on the grid, creating high-reward associations for specific paths.
+- **Semantic Memory**: Uses a SQLite backend to store learned rules, including transitions ($S_1, A \rightarrow S_2$) and composite sequential patterns.
+- **Visual Analytics**: Real-time feedback on current perceptions, active plans, and homeostasis levels.
 
-## Usage & Experimentation Guide
+## 🧠 Core Architecture
 
-### 1. Training Phase (Manual Teaching)
-The fastest way to teach the robot is using the **GUIDE MODE**:
-1. Click **GUIDE MODE** (it will turn orange).
-2. Click on the grid cells adjacent to the robot to lead it toward a battery (green icon).
-3. Observe the **Light Pink** path indicating the taught trajectory.
-4. Each guided step grants the robot `+10` reinforcement, stored in its memory.
+The system is modularized into specialized components:
 
-### 2. Observation Phase (Autonomous)
-Once the robot has some memory:
-1. Switch to **AUTONOMOUS** mode.
-2. Watch as the robot tries to replicate successful patterns or explore new ones.
-3. If it hits a wall, it receives `-10` points, teaching it to avoid that specific perception-action pair.
+1. **`learner.py`**: The cognitive core. Manages the decision engine (Planning vs. Reaction) and the Sleep Cycle (Consolidation).
+2. **`memory.py`**: The persistent storage layer. Handles SQLite migrations and queries for Episodic and Semantic knowledge.
+3. **`robot.py`**: The physical agent model. Manages movement, collisions, and internal biological variables.
+4. **`environment.py`**: The world model. Handles procedural generation of obstacles and resources.
+5. **`main.py`**: Orchestration and UI event handling using PyGame.
 
-### 3. The Dream Cycle (Generalization)
-The robot will automatically "sleep" when its tiredness reaches the limit (50 steps). You can also trigger it manually with **DREAM / SLEEP**:
-- Look at the console to see how many new rules were generated.
-- In the background, the system looks at sequences: if $Step A \to Step B \to Reward$, it creates a **Composite Rule** linking $Step A$ to the eventual success.
+## 🛠️ Installation & Usage
 
-### 4. Data Analysis
-Click **EXPORT DATA** to generate `db_export.txt`. Open this file to see:
-- **Concrete Rules**: Simple associations.
-- **Composite Rules**: Sequential knowledge derived during the dream phase.
-- **Weights**: Higher weights represent more reliable knowledge.
-
-## Technical Stack
-
-- **Languaje**: Python 3.11.2
-- **Engine**: PyGame
-- **Database**: SQLite3 (Recursive memory storage)
-- **Environment**: 10x10 Grid with procedurally placed walls and batteries.
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/marcobaturan/General_Learner_4.git
-   ```
-2. Run with Python:
+1. **Requirements**: Python 3.11+, PyGame.
+2. **Run**: 
    ```bash
    python main.py
    ```
+3. **Controls**:
+   - **Autonomous**: Toggles the agent's self-directed behavior.
+   - **Guide Mode**: Click on tiles adjacent to the robot to lead it to a goal.
+   - **Dream / Sleep**: Manually trigger rule consolidation (happens automatically when Tiredness reaches 50).
+   - **Clear Memory**: Reset the SQLite database.
+
+## 🧪 Experimentation Guide
+
+- **Phase 1: Exploration**: Turn on Autonomous mode. The robot will move randomly, occasionally hitting walls or finding batteries.
+- **Phase 2: Reinforcement**: Use the `+` and `-` buttons to give immediate feedback on the robot's last action in a specific situation.
+- **Phase 3: Consolidation**: Let the robot "Sleep". You will see "New rules" in the console as it builds its internal world map.
+- **Phase 4: Planning**: Once enough transitions are learned, the robot will display `ACTIVE PLAN` when it sees a situation it knows can lead to a battery.
 
 ---
-*Created as part of the Intelligent Systems Research series.*
+*Developed by Antigravity AI for research in Intelligent Systems.*

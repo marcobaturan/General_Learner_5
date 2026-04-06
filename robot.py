@@ -1,109 +1,109 @@
 from constants import *
-from environment import Environment
 
 class Robot:
-    def __init__(self, env: Environment):
+    """
+    Autonomous agent that learns to survive by finding batteries and avoiding walls.
+    Maintains internal homeostasis variables (Hunger, Tiredness).
+    """
+    def __init__(self, env):
         self.env = env
         self.reset()
-        
+        self.score = 0
+        self.direction = DIR_N
+        self.hunger = 0      # Increases every move, reset by battery
+        self.tiredness = 0   # Increases every move, triggers Sleep Cycle (Dreaming)
+
     def reset(self):
+        """Positions the robot back in the center of the world."""
         self.x = GRID_W // 2
         self.y = GRID_H // 2
         self.direction = DIR_N
-        self.score = 0
-        self.tiredness = 0 
-        self.hunger = HUNGER_MAX  # starts hungry or full? Let's say hunger increases to max.
-        
-    def get_state(self):
-        # State includes perception and internal needs
-        perception = self.env.get_perception_matrix(self.x, self.y, self.direction)
-        # 1 if very hungry, 0 if not
-        is_hungry = 1 if self.hunger > (HUNGER_MAX // 2) else 0
-        return {
-            'perception': perception,
-            'is_hungry': is_hungry
-        }
 
-    def can_move(self, target_x, target_y):
-        cell = self.env.get_cell(target_x, target_y)
-        if cell == WALL_ID:
-            return False
-        return True
+    def get_state(self):
+        """Returns the robot's complete current 'Situation'."""
+        return {
+            'pos': (self.x, self.y),
+            'dir': self.direction,
+            'perception': self.env.get_perception_at(self.x, self.y, self.direction),
+            'needs': {'hunger': self.hunger, 'tiredness': self.tiredness}
+        }
 
     def step(self, action):
         """
-        Actions:
-        0 = Turn Left
-        1 = Turn Right
-        2 = Move Forward
-        3 = Move Backward
-        Returns: reward gained
+        Executes a discrete motor command and returns its reinforcement value.
+        Actions: 0:Turn Left, 1:Turn Right, 2:Move Forward, 3:Move Backward
         """
-        reward = -1  # every cycle costs 1
-        self.tiredness += 1
+        reward = -1 # Small penalty per step to encourage efficiency
         self.hunger += 1
-        
-        target_x, target_y = self.x, self.y
-        dir_offsets = {
-            DIR_N: (0, -1),
-            DIR_E: (1, 0),
-            DIR_S: (0, 1),
-            DIR_W: (-1, 0)
-        }
-        
-        if action == 0:
-            self.direction = (self.direction - 1) % 4
-        elif action == 1:
-            self.direction = (self.direction + 1) % 4
-        elif action == 2: # Forward
-            dx, dy = dir_offsets[self.direction]
-            target_x += dx
-            target_y += dy
-        elif action == 3: # Backward
-            dx, dy = dir_offsets[self.direction]
-            target_x -= dx
-            target_y -= dy
+        self.tiredness += 1
 
-        if action in [2, 3]:
-            # Try to move
-            cell = self.env.get_cell(target_x, target_y)
-            if cell == WALL_ID:
-                # Collision
-                reward += -10
-            else:
-                self.x, self.y = target_x, target_y
-                if cell == BATTERY_ID:
-                    reward += 10
-                    self.hunger = 0 # reset hunger
-                    self.env.remove_battery(self.x, self.y)
-                    # If all batteries are consumed, we could add more
-                    
-        self.score += reward
+        if action == 0: # Turn Left
+            self.direction = (self.direction - 1) % 4
+        elif action == 1: # Turn Right
+            self.direction = (self.direction + 1) % 4
+        elif action == 2: # Move Forward
+            self.move_forward()
+        elif action == 3: # Move Backward
+            self.move_backward()
+            
+        # Check current cell for objects (Batteries)
+        obj = self.env.get_at(self.x, self.y)
+        if obj == BATTERY_ID:
+            reward = 10     # Positive reinforcement
+            self.score += 10
+            self.hunger = 0 # Satisfaction of biological need
+            self.env.remove_at(self.x, self.y)
+            
         return reward
+
+    def move_forward(self):
+        """Attempts to move in the current facing direction."""
+        nx, ny = self.x, self.y
+        if self.direction == DIR_N: ny -= 1
+        elif self.direction == DIR_E: nx += 1
+        elif self.direction == DIR_S: ny += 1
+        elif self.direction == DIR_W: nx -= 1
+        
+        # Collision detection: Walls prevent movement
+        if self.env.get_at(nx, ny) != WALL_ID:
+            self.x, self.y = nx, ny
+
+    def move_backward(self):
+        """Attempts to move opposite to the current facing direction."""
+        nx, ny = self.x, self.y
+        if self.direction == DIR_N: ny += 1
+        elif self.direction == DIR_E: nx -= 1
+        elif self.direction == DIR_S: ny -= 1
+        elif self.direction == DIR_W: nx += 1
+        
+        if self.env.get_at(nx, ny) != WALL_ID:
+            self.x, self.y = nx, ny
 
     def get_action_to(self, target_x, target_y):
         """
-        Returns the action required to move to an adjacent cell (target_x, target_y).
-        Calculates rotation and forward movement.
+        Vicarious Learning helper: Determines which motor command 
+        is needed to reach an adjacent cell (target_x, target_y).
+        Used by the UI's Guide Mode.
         """
-        dx, dy = target_x - self.x, target_y - self.y
-        if abs(dx) + abs(dy) != 1: return None
+        if target_x == self.x and target_y == self.y: return None
         
-        # Determine target direction
+        # Simple heuristic: If we can reach it by moving forward, do so.
+        # Otherwise, rotate to face the target.
+        dx = target_x - self.x
+        dy = target_y - self.y
+        
         target_dir = None
         if dx == 1: target_dir = DIR_E
         elif dx == -1: target_dir = DIR_W
         elif dy == 1: target_dir = DIR_S
         elif dy == -1: target_dir = DIR_N
         
-        if target_dir is None: return None
-        
-        # If already facing that way, move forward
-        if self.direction == target_dir:
-            return 2 # Forward
-        else:
-            # Turn towards target
-            diff = (target_dir - self.direction) % 4
-            if diff == 1: return 1 # Right
-            elif diff == 3: return 0 # Left
-            else: return 1 # Turn around (either side)
+        if target_dir is not None:
+            if target_dir == self.direction:
+                return 2 # Forward
+            else:
+                # Rotate toward it
+                diff = (target_dir - self.direction + 4) % 4
+                if diff == 1: return 1 # Right
+                return 0 # Left
+        return None

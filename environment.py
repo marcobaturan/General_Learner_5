@@ -2,87 +2,63 @@ import random
 from constants import *
 
 class Environment:
+    """
+    Manages the 2D grid world where the robot lives.
+    Handles walls, batteries, and the robot's spatial awareness.
+    """
     def __init__(self):
         self.grid = [[EMPTY_ID for _ in range(GRID_W)] for _ in range(GRID_H)]
-        self.batteries = [] # List of (x,y)
-        self.walls = [] # List of (x,y)
         self.reset()
-        
+
     def reset(self):
-        """Resets the environment setting random walls and 1-3 batteries, ensuring the center is free."""
+        """
+        Clears the grid and regenerates a new random configuration of walls 
+        and batteries for the next experimental cycle.
+        """
+        # Reset to empty state
         self.grid = [[EMPTY_ID for _ in range(GRID_W)] for _ in range(GRID_H)]
-        self.batteries.clear()
-        self.walls.clear()
         
-        center_x, center_y = GRID_W // 2, GRID_H // 2
+        # 1. Place Walls: Static obstacles that the robot cannot pass.
+        for _ in range(15):
+            wx, wy = random.randint(0, GRID_W-1), random.randint(0, GRID_H-1)
+            # Avoid placing walls at the robot's starting position (center)
+            if (wx, wy) != (GRID_W//2, GRID_H//2):
+                self.grid[wy][wx] = WALL_ID
         
-        # Place random walls (let's say ~10 walls)
-        num_walls = random.randint(5, 15)
-        for _ in range(num_walls):
-            self._place_random_item(WALL_ID, [(center_x, center_y)])
-            
-        # Place 1 to 3 batteries
-        num_batteries = random.randint(1, 3)
-        for _ in range(num_batteries):
-            self._place_random_item(BATTERY_ID, [(center_x, center_y)])
+        # 2. Place Batteries: Resource entities that provide +10 reinforcement points.
+        target_batteries = random.randint(1, 3)
+        placed = 0
+        while placed < target_batteries:
+            bx, by = random.randint(0, GRID_W-1), random.randint(0, GRID_H-1)
+            # Ensure placement on an empty tile and away from the starting position
+            if self.grid[by][bx] == EMPTY_ID and (bx, by) != (GRID_W//2, GRID_H//2):
+                self.grid[by][bx] = BATTERY_ID
+                placed += 1
 
-    def _place_random_item(self, item_id, exclude_list):
-        placed = False
-        while not placed:
-            x = random.randint(0, GRID_W - 1)
-            y = random.randint(0, GRID_H - 1)
-            # Conditions for placing: empty and not in excluded positions
-            if self.grid[y][x] == EMPTY_ID and (x, y) not in exclude_list:
-                self.grid[y][x] = item_id
-                placed = True
-                if item_id == WALL_ID:
-                    self.walls.append((x, y))
-                elif item_id == BATTERY_ID:
-                    self.batteries.append((x, y))
-                    
-    def remove_battery(self, x, y):
-        if (x, y) in self.batteries:
-            self.batteries.remove((x, y))
-            self.grid[y][x] = EMPTY_ID
-
-    def get_cell(self, x, y):
+    def get_at(self, x, y):
+        """
+        Safely returns the ID of the object at (x, y). 
+        Returns WALL_ID if the coordinates are out of bounds.
+        """
         if 0 <= x < GRID_W and 0 <= y < GRID_H:
             return self.grid[y][x]
-        return WALL_ID # Out of bounds acts like a wall
+        return WALL_ID # Out of bounds is treated as an impenetrable wall
 
-    def get_perception_matrix(self, pos_x, pos_y, direction):
-        """
-        Returns the perception array based on relative orientation:
-        3 cells ahead, 2 to sides, 0 behind.
-        Returns a simplified representation (flattened or structured).
-        Let's define rows 0 to 3 relative to robot.
-        Row 0 is distance 0 (the robot's row), which includes side cells distance 1 and 2.
-        Row 1 is 1 block ahead, width 5 (2 left, center, 2 right)
-        Row 2 is 2 blocks ahead.
-        Row 3 is 3 blocks ahead.
-        Total cells = 4 rows x 5 columns = 20 cells.
-        """
-        # Direction mappings for dy, dx (relative 'ahead')
-        # North: y decreases
-        dir_offsets = {
-            DIR_N: (0, -1),
-            DIR_E: (1, 0),
-            DIR_S: (0, 1),
-            DIR_W: (-1, 0)
-        }
-        
-        forward_vec = dir_offsets[direction]
-        # Right vector is 90 degrees clockwise
-        right_vec = (-forward_vec[1], forward_vec[0]) 
+    def remove_at(self, x, y):
+        """Sets the cell at (x, y) to EMPTY_ID. Used when a battery is consumed."""
+        if 0 <= x < GRID_W and 0 <= y < GRID_H:
+            self.grid[y][x] = EMPTY_ID
 
+    def get_perception_at(self, rx, ry, direction):
+        """
+        Calculates the robot's local view (Situational Awareness).
+        The robot perceives a 3x3 local grid centered on itself.
+        """
         perception = []
-        for dist_fwd in range(0, 4):  # 0 to 3 ahead
-            for dist_right in range(-2, 3): # -2 (left) to 2 (right)
-                # Ignore the robot's own cell (0,0) or include it as special?
-                # The user wants "tacto a 0 metros", which means the adjacent blocks or its own.
-                cell_x = pos_x + forward_vec[0] * dist_fwd + right_vec[0] * dist_right
-                cell_y = pos_y + forward_vec[1] * dist_fwd + right_vec[1] * dist_right
-                cell_val = self.get_cell(cell_x, cell_y)
-                perception.append(cell_val)
-                
+        for dy in range(-1, 2):
+            row = []
+            for dx in range(-1, 2):
+                tx, ty = rx + dx, ry + dy
+                row.append(self.get_at(tx, ty))
+            perception.append(row)
         return perception
