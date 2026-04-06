@@ -7,6 +7,7 @@ from environment import Environment
 from robot import Robot
 from memory import Memory
 from learner import Learner
+import graphics
 from graphics import Button, TextBox, create_robot_icon, create_battery_icon, create_wall_icon
 
 class GeneralLearnerApp:
@@ -337,7 +338,6 @@ class GeneralLearnerApp:
         
         if self.learner.agenda:
             for i, landmark in enumerate(self.learner.agenda[:5]):
-                import graphics
                 graphics.draw_mini_perception(self.screen, CANVAS_WIDTH + 10 + i*35, WINDOW_HEIGHT - 35, 30, landmark)
         
         if self.learner.active_plan:
@@ -349,7 +349,6 @@ class GeneralLearnerApp:
 
     def draw_reports(self):
         """Renders graphical charts or situational network to the right panel."""
-        import graphics 
         rep_x = CANVAS_WIDTH + PANEL_WIDTH + 20
         rep_w = REPORT_WIDTH - 40
         
