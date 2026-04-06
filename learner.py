@@ -31,7 +31,7 @@ class Learner:
     def act(self, robot, text_command=None):
         """
         Determines the next move.
-        0. Priotitize Textual Command associations.
+        0. Priotitize Textual Command associations (Macros and Symbols).
         1. Checks for an active plan.
         2. If no plan, tries to generate one.
         3. Best reactive rule.
@@ -41,11 +41,37 @@ class Learner:
         perc_str = json.dumps(perception)
         
         # 0. SYMBOLIC COMMAND PROCESSING
-        # If the user has typed something, search for rules associated with that text.
         if text_command and text_command.strip():
             cmd = text_command.strip().upper()
             rules = self.memory.get_rules()
             
+            # --- PHASE A: EXACT MACRO MATCH ---
+            # Search for composite rules (Macros) that match this exact string
+            for r in rules:
+                if r['command_text'] == cmd and r['is_composite'] == 1 and r['macro_actions']:
+                    try:
+                        actions = json.loads(r['macro_actions'])
+                        if actions:
+                            self.active_plan = actions[1:] # Load rest of sequence
+                            return actions[0]
+                    except: continue
+
+            # --- PHASE B: RECURSIVE DECOMPOSITION ---
+            # If no exact macro, split by 'y' or ',' to see if parts are known
+            parts = [p.strip() for p in cmd.replace(',', ' Y ').split(' Y ') if p.strip()]
+            if len(parts) > 1:
+                decomposed_plan = []
+                for p in parts:
+                    # Find any rule that matches this sub-part (ignoring context for general parts)
+                    sub_action = self._get_action_for_symbol(p, rules)
+                    if sub_action is not None:
+                        decomposed_plan.append(sub_action)
+                
+                if decomposed_plan:
+                    self.active_plan = decomposed_plan[1:]
+                    return decomposed_plan[0]
+
+            # --- PHASE C: SIMPLE SYMBOL MATCH ---
             # Priority 1: Context-specific command (Perception + Text)
             for r in rules:
                 if r['perception_pattern'] == perc_str and r['command_text'] == cmd:
@@ -53,15 +79,8 @@ class Learner:
                         return r['target_action']
             
             # Priority 2: General command (Anywhere + Text)
-            # Find the most frequent action for this string across all contexts
-            cmd_actions = {}
-            for r in rules:
-                if r['command_text'] == cmd:
-                    a = r['target_action']
-                    cmd_actions[a] = cmd_actions.get(a, 0) + r['weight']
-            
-            if cmd_actions:
-                return max(cmd_actions, key=cmd_actions.get)
+            sub_action = self._get_action_for_symbol(cmd, rules)
+            if sub_action is not None: return sub_action
 
         # 1. Follow active plan and update Visuospatial Agenda
         if self.active_plan:
@@ -121,9 +140,19 @@ class Learner:
                     best_action = action
         
         return best_action
-            
-        # 4. Fallback to random discovery
-        return random.choice([0, 1, 2, 3])
+
+    def _get_action_for_symbol(self, symbol, rules):
+        """Helper to find the most frequent action associated with a text symbol."""
+        sym = symbol.strip().upper()
+        sym_actions = {}
+        for r in rules:
+            if r['command_text'] == sym and not r['is_composite']:
+                a = r['target_action']
+                sym_actions[a] = sym_actions.get(a, 0) + r['weight']
+        
+        if sym_actions:
+            return max(sym_actions, key=sym_actions.get)
+        return None
 
     def plan_to_goal(self, start_perc_str, max_depth=5):
         """
@@ -226,18 +255,36 @@ class Learner:
 
     def sleep_cycle(self):
         """
-        The 'Dream' phase. Analyzes chronological memory to:
-        1. Extract rules from rewards.
-        2. Map symbolic text to actions.
+        The 'Dream' phase. 
+        1. Consolidate rules.
+        2. MACRO INDUCTION: Identify sequences under the same command string.
         """
-        # Step 1: Forgetting
         self.memory.decay_rules(amount=1)
-
         history = self.memory.get_all_chrono()
         if not history: return 0
         
         new_rules_count = 0
         
+        # Phase 1: Group Macro Sequences
+        # If a long command persists across multiple lines, it's a sequence candidate
+        macros = {} # cmd -> list of action sequences
+        i = 0
+        while i < len(history):
+            cmd = history[i]['command_text']
+            if cmd and len(cmd) > 5: # Long enough to be a potential sentence
+                seq = []
+                start_perc = json.loads(history[i]['perception'])
+                while i < len(history) and history[i]['command_text'] == cmd:
+                    seq.append(history[i]['action'])
+                    i += 1
+                if len(seq) > 1:
+                    # Found a macro sequence!
+                    self.memory.add_rule(start_perc, seq[0], weight=10, is_composite=1, macro_actions=seq, command=cmd)
+                    new_rules_count += 1
+            else:
+                i += 1
+
+        # Phase 2: Standard Rule Consolidation (Episodic to Semantic)
         for i in range(len(history)):
             record = history[i]
             perc_pattern = json.loads(record['perception'])
@@ -249,14 +296,10 @@ class Learner:
             if i < len(history) - 1:
                 next_perc = json.loads(history[i+1]['perception'])
 
-            # Rule reinforcement weight
             w = 5 if reward > 0 else (1 if reward >= -5 else -5)
-            
-            # Create Rule (with symbol if present)
             self.memory.add_rule(perc_pattern, action, weight=w, next_perception=next_perc, command=cmd)
             new_rules_count += 1
             
-            # Back-propagation of success
             if reward > 0 and i > 0:
                 prev_record = history[i-1]
                 prev_perc = json.loads(prev_record['perception'])

@@ -36,6 +36,7 @@ class Memory:
                 perception_pattern TEXT NOT NULL,
                 target_action INTEGER NOT NULL,
                 command_text TEXT DEFAULT NULL,
+                macro_actions TEXT DEFAULT NULL,
                 weight INTEGER DEFAULT 1,
                 is_composite INTEGER DEFAULT 0,
                 next_perception TEXT DEFAULT NULL
@@ -48,7 +49,8 @@ class Memory:
             'rules': [
                 'is_composite INTEGER DEFAULT 0',
                 'next_perception TEXT DEFAULT NULL',
-                'command_text TEXT DEFAULT NULL'
+                'command_text TEXT DEFAULT NULL',
+                'macro_actions TEXT DEFAULT NULL'
             ]
         }
         for table, new_cols in cols.items():
@@ -71,7 +73,7 @@ class Memory:
         """, (perc_str, action, reward, command))
         self.conn.commit()
 
-    def add_rule(self, perception_pattern, action, weight=1, is_composite=0, next_perception=None, command=None):
+    def add_rule(self, perception_pattern, action, weight=1, is_composite=0, next_perception=None, command=None, macro_actions=None):
         """
         Adds or updates a rule in semantic memory.
         If the (perception, action, command) triad exists, increments weight.
@@ -79,8 +81,9 @@ class Memory:
         cur = self.conn.cursor()
         perc_str = json.dumps(perception_pattern)
         next_perc_str = json.dumps(next_perception) if next_perception else None
+        macro_str = json.dumps(macro_actions) if macro_actions else None
         
-        # Check if the exact rule (same stimulus + command + action) exists
+        # Check if the exact rule (same stimulus + command + action/macro) exists
         query = "SELECT id, weight FROM rules WHERE perception_pattern = ? AND target_action = ?"
         params = [perc_str, action]
         if command:
@@ -93,13 +96,13 @@ class Memory:
         row = cur.fetchone()
         
         if row:
-            cur.execute("UPDATE rules SET weight = weight + ?, is_composite = ?, next_perception = ? WHERE id = ?", 
-                        (weight, is_composite, next_perc_str, row['id']))
+            cur.execute("UPDATE rules SET weight = weight + ?, is_composite = ?, next_perception = ?, macro_actions = ? WHERE id = ?", 
+                        (weight, is_composite, next_perc_str, macro_str, row['id']))
         else:
             cur.execute("""
-                INSERT INTO rules (perception_pattern, target_action, weight, is_composite, next_perception, command_text) 
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (perc_str, action, weight, is_composite, next_perc_str, command))
+                INSERT INTO rules (perception_pattern, target_action, weight, is_composite, next_perception, command_text, macro_actions) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (perc_str, action, weight, is_composite, next_perc_str, command, macro_str))
         self.conn.commit()
 
     def get_all_chrono(self):
