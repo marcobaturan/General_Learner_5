@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+general_learner.db
+db_export.txt
+.DS_Store
