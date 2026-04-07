@@ -8,12 +8,12 @@ CELL_SIZE = 40
 # Window regions
 CANVAS_WIDTH = GRID_W * CELL_SIZE
 CANVAS_HEIGHT = GRID_H * CELL_SIZE
-WINDOW_WIDTH = 1300 # Main + Sidebar + Dashboard + POV
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 1350 # Slightly wider for more info
+WINDOW_HEIGHT = 650 # Slightly taller
 PANEL_WIDTH = 220
 REPORT_WIDTH = 300
 POV_WIDTH = 350
-POV_HEIGHT = 400
+POV_HEIGHT = 450
 
 # Colors
 BLACK = (0, 0, 0)
@@ -49,9 +49,16 @@ ACT_FORWARD = 2
 ACT_BACKWARD = 3
 
 # UI Constants
-BTN_HEIGHT = 40
-BTN_MARGIN = 5
+BTN_HEIGHT = 30 # Compactified from 40
+BTN_MARGIN = 4
 
 # Need thresholds
 TIREDNESS_MAX = 150 
 HUNGER_MAX = 150
+
+# Cognitive Logic
+DECAY_RATE_EPISODIC = 0.85 # Faster asymptotic decay
+DECAY_RATE_SEMANTIC = 0.98 # Slower asymptotic decay
+FORGET_THRESHOLD = 0.05
+MEMORY_EPISODIC = 0
+MEMORY_SEMANTIC = 1

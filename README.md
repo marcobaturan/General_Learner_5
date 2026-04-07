@@ -1,12 +1,16 @@
 # General Learner 4 (GL4): A Cognitive Autonomous Architecture
 
+![GL4 Preview](assets/preview.png)
+
 General Learner 4 (GL4) is an advanced autonomous agent inspired by the **Universal Learner model** (Fritz et al., 1989) and contemporary hippocampal research. This project demonstrates emergent situational mapping, probabilistic decision-making, and biological homeostasis within a real-time 2D simulation.
+
+> 📖 **Full Research Documentation**: For a detailed academic overview citing the cybernetic lineage (W. Grey Walter, J. Andrade, W. Fritz) and cognitive formulas, please read our [White Paper](WHITE_PAPER.md).
 
 ---
 
 ## 📽️ System Demonstration
 ### Watch General Learner 4 in Action
-[![Download Demo Video](https://img.shields.io/badge/DOWNLOAD-Demo_Video-blue?style=for-the-badge&logo=video)](GL4-2026-04-06.mp4)
+[![Download Demo Video](https://img.shields.io/badge/DOWNLOAD-Demo_Video-blue?style=for-the-badge&logo=video)](assets/GL4-2026-04-06.mp4)
 
 ---
 
@@ -17,7 +21,7 @@ The GL4 now features a **Wolfenstein-style 2.5D Rendering Engine**. This allows 
 - **Directional Shading**: Walls are rendered with differential brightness (N/S vs E/W) to create realistic contours and depth.
 - **Visual Grounding**: The POV system helps the user understand why the robot identifies specific 3x3 patterns as stable landmarks.
 
-![Robot POV Vision](gl4_pov.jpg)
+![Robot POV Vision](assets/gl4_pov.jpg)
 *Figure 1: The 2.5D Raycasting view showing the robot's egocentric perspective.*
 
 ---
@@ -31,7 +35,7 @@ Inspired by **O'Keefe & Nadel**, the agent constructs a **Directed Conceptual Gr
 - **Nodes**: Each unique 3x3 visual pattern ($S_n$) is treated as a stable "Landmark".
 - **Edges**: The agent learns the transition $(S_1, A) \to S_2$.
 
-![Situational Mapping Dashboard](gl4_mapworld.jpg)
+![Situational Mapping Dashboard](assets/gl4_mapworld.jpg)
 *Figure 2: The Situational Network showing the robot's internal representation of the environment.*
 
 ### 2. Visuospatial Agenda (Mental Simulation)
@@ -57,7 +61,7 @@ Unlike systems with hardcoded keywords, GL4 implements **Symbolic Grounding**:
 - **Arbitrary Association**: The robot learns to associate any text string (e.g., "GIRA", "DERECHA", "MOVE") with physical actions through experience.
 - **Command Priority**: Once a symbol is "grounded" (associated with a successful outcome), the robot prioritizes user commands over its own autonomous drives.
 
-![Command Interface](gl4_command.jpg)
+![Command Interface](assets/gl4_command.jpg)
 *Figure 3: The Symbolic Command and Homeostatic Sidebar.*
 
 ### 5. Cognitive Macro Learning & Command Decomposition
@@ -74,7 +78,7 @@ In **Guided Mode**, the user can "lead" the robot through a path.
 - **Forced Movement**: Clicks in this mode immediately move the robot, acting as "Forced Instruction."
 - **Expert Absorption**: The robot performs **Vicarious Learning**, absorbing the user's expertise directly into its Situational Map.
 
-![Vicarious Learning in Guided Mode](gl4_vicarious_guided_mode.jpg)
+![Vicarious Learning in Guided Mode](assets/gl4_vicarious_guided_mode.jpg)
 *Figure 4: Guided Mode highlighting the robot's prediction of intended target cells.*
 
 ---
@@ -83,8 +87,14 @@ In **Guided Mode**, the user can "lead" the robot through a path.
 
 The **Cognitive Dashboard** provides real-time telemetry on learning efficiency, rule consolidation, and objective achievement.
 
-![Cognitive Reporting Dashboard](GL4_inform.jpg)
+![Cognitive Reporting Dashboard](assets/GL4_inform.jpg)
 *Figure 5: The Performance Analytics panel displaying live learning trends.*
+
+---
+
+## 🛠️ Codebase Execution
+Capturing the simulation and terminal state during a training run.
+![Codebase Execution](assets/Captura%20de%20pantalla_2026-04-06_21-37-14.jpg)
 
 ---
 
@@ -94,7 +104,10 @@ The **Cognitive Dashboard** provides real-time telemetry on learning efficiency,
    ```bash
    python main.py
    ```
-3. **Training**: Use **GUIDE MODE** to teach the robot landmarks, then switch to **AUTONOMOUS** to watch it navigate using its Cognitive Map.
+3. **Tests**:
+   ```bash
+   python -m unittest discover tests
+   ```
 
 ---
-*Developed by Marco Baturan | Based on the Universal Learner Paradigms (1989).*
+*Developed by Marco Baturan | Cybernetic Legacy: W. Grey Walter, W. Fritz, J. Andrade.*

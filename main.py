@@ -34,6 +34,7 @@ class GeneralLearnerApp:
         self.total_steps = 0
         self.stats_history = [] # Stores (step, score, rules_count)
         self.show_network = False 
+        self.view_mode = 'SITUATIONAL' # 'SITUATIONAL' or 'TERRITORY'
 
         # Load Graphical Assets (Procedural Bitmaps)
         self.robot_img = create_robot_icon(CELL_SIZE)
@@ -51,44 +52,45 @@ class GeneralLearnerApp:
         btn_x = CANVAS_WIDTH + 20
         btn_w = PANEL_WIDTH - 40
         y_off = 20
+        step_y = BTN_HEIGHT + BTN_MARGIN
         
         # Behavior Control
         self.btn_auto = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "AUTONOMOUS", GRAY)
-        y_off += 40
+        y_off += step_y
         self.btn_comm = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "COMMAND", GRAY)
-        y_off += 40
+        y_off += step_y
         
         # Direct Command Interface
         self.txt_box = TextBox(btn_x, y_off, btn_w, 25)
-        y_off += 35
+        y_off += 30
         self.btn_do = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "DO ACTION", GRAY)
-        y_off += 40
+        y_off += step_y
         
         # Manual Reinforcement
         self.btn_plus = Button(btn_x, y_off, btn_w//2 - 5, BTN_HEIGHT, "+", GREEN)
         self.btn_minus = Button(btn_x + btn_w//2 + 5, y_off, btn_w//2 - 5, BTN_HEIGHT, "-", RED)
-        y_off += 40
+        y_off += step_y
         
         # Knowledge Management
         self.btn_sleep = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "DREAM / SLEEP", BLUE)
-        y_off += 40
-        self.btn_export = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "EXPORT DATA", GRAY)
-        y_off += 40
+        y_off += step_y
         self.btn_clear = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "CLEAR MEMORY", RED)
-        y_off += 40
+        y_off += step_y
         
         # Vicarious Learning
-        self.btn_guide = Button(btn_x, y_off, btn_w, 35, "GUIDE MODE", GRAY)
-        y_off += 40
+        self.btn_guide = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "GUIDE MODE", GRAY)
+        y_off += step_y
         
         # Control & Reporting Buttons
-        self.btn_inform = Button(btn_x, y_off, btn_w, 35, "REPORT / INFORM", YELLOW)
-        y_off += 40
-        self.btn_network = Button(btn_x, y_off, btn_w, 35, "SHOW NETWORK", PURPLE)
-        y_off += 40
-        self.btn_bayes = Button(btn_x, y_off, btn_w, 35, "TOGGLE BAYES", CYAN)
-        y_off += 40
-        self.btn_pov = Button(btn_x, y_off, btn_w, 35, "TOGGLE POV", CYAN)
+        self.btn_network = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "SHOW NETWORK", PURPLE)
+        y_off += step_y
+        self.btn_territory = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "TERRITORY MAP", BLUE)
+        y_off += step_y
+        self.btn_bayes = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "TOGGLE BAYES", CYAN)
+        y_off += step_y
+        self.btn_pov = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "TOGGLE POV", CYAN)
+        y_off += step_y
+        self.btn_inform = Button(btn_x, y_off, btn_w, BTN_HEIGHT, "EXPORT REPORT", YELLOW)
 
         # POV State
         self.show_pov = False
@@ -149,8 +151,6 @@ class GeneralLearnerApp:
                     self.apply_manual_reinforcement(-10)
                 elif self.btn_sleep.is_clicked(pos):
                     self.dream()
-                elif self.btn_export.is_clicked(pos):
-                    self.export_db()
                 elif self.btn_clear.is_clicked(pos):
                     self.memory.clear()
                     print("Memory wiped.")
@@ -162,6 +162,10 @@ class GeneralLearnerApp:
                     self.export_report()
                 elif self.btn_network.is_clicked(pos):
                     self.show_network = not self.show_network
+                    self.view_mode = 'SITUATIONAL'
+                elif self.btn_territory.is_clicked(pos):
+                    self.show_network = True
+                    self.view_mode = 'TERRITORY'
                 if self.btn_bayes.is_clicked(event.pos):
                     self.learner.bayesian = not self.learner.bayesian
                 if self.btn_pov.is_clicked(event.pos):
@@ -187,8 +191,9 @@ class GeneralLearnerApp:
             
         reward = self.robot.step(action)
         
-        # Record experience WITH the current text command as a concurrent stimulus
-        self.memory.add_chrono(state['perception'], action, reward, command=text_cmd)
+        # 3. USE THE NEW AGNOSTIC LEARNING FLOW
+        self.learner.learn(self.robot, action, reward, text_command=text_cmd)
+        
         self.last_action_reward = reward
         self.guide_path = []
         self.total_steps += 1
@@ -207,11 +212,16 @@ class GeneralLearnerApp:
         })
 
     def apply_manual_reinforcement(self, amount):
-        """Forces reinforcement for the last taken action."""
+        """Forces reinforcement for the last taken action using conceptual IDs."""
         history = self.memory.get_all_chrono()
         if history:
             last = history[-1]
-            self.memory.add_rule(json.loads(last['perception']), last['action'], weight=amount)
+            perc_id = json.dumps(last['perception'])
+            cmd_id = None
+            if last.get('command_text'):
+                cmd_id = self.memory.get_or_create_concept_id(last['command_text'].upper())
+            
+            self.memory.add_rule(perc_id, last['action'], weight=amount, command_id=cmd_id)
             print(f"Manual reinforcement applied: {amount}")
 
     def dream(self):
@@ -223,7 +233,7 @@ class GeneralLearnerApp:
         nodes, _ = self.learner.get_situational_graph()
         
         # 3. Apply biological forgetting (Differential Decay)
-        self.memory.decay_rules(amount=1, spatial_perceptions=nodes)
+        self.memory.decay_rules()
         
         self.memory.clear_chrono()
         print(f"Dream complete: Consolidated {count} rules/transitions.")
@@ -321,11 +331,11 @@ class GeneralLearnerApp:
         self.btn_plus.draw(self.screen)
         self.btn_minus.draw(self.screen)
         self.btn_sleep.draw(self.screen)
-        self.btn_export.draw(self.screen)
         self.btn_clear.draw(self.screen)
         self.btn_guide.draw(self.screen)
         self.btn_inform.draw(self.screen)
         self.btn_network.draw(self.screen)
+        self.btn_territory.draw(self.screen)
         self.btn_bayes.draw(self.screen)
         self.btn_pov.draw(self.screen)
         
@@ -334,8 +344,9 @@ class GeneralLearnerApp:
 
         # 4. POV (3D Raycasting)
         if self.show_pov:
-            # Position at the far right
-            pov_rect = pygame.Rect(WINDOW_WIDTH - POV_WIDTH - 10, 150, POV_WIDTH, 400)
+            # Positioned closer to the Report panel (next to it)
+            rep_x_right = CANVAS_WIDTH + PANEL_WIDTH + 20 + REPORT_WIDTH
+            pov_rect = pygame.Rect(rep_x_right + 10, 150, POV_WIDTH, POV_HEIGHT)
             graphics.draw_raycast_view(self.screen, pov_rect, self.robot, self.env)
  
         # 4. HUD Stats & Agenda
@@ -365,12 +376,17 @@ class GeneralLearnerApp:
         rep_w = REPORT_WIDTH - 40
         
         if self.show_network:
-            # Render the Situational Map (World Map from Situations)
-            nodes, edges = self.learner.get_situational_graph()
-            net_rect = pygame.Rect(rep_x, 60, rep_w, 450)
-            header_surf = pygame.font.SysFont('Arial', 20, bold=True).render("SITUATIONAL WORLD MAP", True, PURPLE)
-            self.screen.blit(header_surf, (rep_x, 20))
-            graphics.draw_situational_network(self.screen, net_rect, nodes, edges)
+            rep_rect = pygame.Rect(rep_x, 60, rep_w, 450)
+            if self.view_mode == 'SITUATIONAL':
+                nodes, edges = self.learner.get_situational_graph()
+                header_surf = pygame.font.SysFont('Arial', 20, bold=True).render("SITUATIONAL WORLD MAP", True, PURPLE)
+                self.screen.blit(header_surf, (rep_x, 20))
+                graphics.draw_situational_network(self.screen, rep_rect, nodes, edges, self.memory)
+            else:
+                territory = self.memory.get_territory()
+                header_surf = pygame.font.SysFont('Arial', 20, bold=True).render("GLOBAL TERRITORY MAP", True, BLUE)
+                self.screen.blit(header_surf, (rep_x, 20))
+                graphics.draw_territory_map(self.screen, rep_rect, territory)
             return
 
         # Header

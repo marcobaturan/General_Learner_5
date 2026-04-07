@@ -1,3 +1,4 @@
+import math
 from constants import *
 
 class Robot:
@@ -20,13 +21,56 @@ class Robot:
         self.direction = DIR_N
 
     def get_state(self):
-        """Returns the robot's complete current 'Situation'."""
+        """
+        Returns the robot's complete current 'Situation', including 
+        raw numerical sensory data for the Fuzzy Logic layer.
+        """
+        raw_distances = {
+            'N': self._dist_to_wall(DIR_N),
+            'E': self._dist_to_wall(DIR_E),
+            'S': self._dist_to_wall(DIR_S),
+            'W': self._dist_to_wall(DIR_W)
+        }
+        
+        # Calculate distance to nearest battery
+        batt_dist = self._dist_to_nearest_battery()
+
         return {
             'pos': (self.x, self.y),
             'dir': self.direction,
             'perception': self.env.get_perception_at(self.x, self.y, self.direction),
+            'raw_distances': raw_distances,
+            'batt_distance': batt_dist,
             'needs': {'hunger': self.hunger, 'tiredness': self.tiredness}
         }
+
+    def _dist_to_wall(self, direction):
+        """Calculates numerical distance to the nearest wall in a given direction."""
+        d = 0
+        cx, cy = self.x, self.y
+        while d < 15: # Sensory limit
+            d += 1
+            if direction == DIR_N: cy -= 1
+            elif direction == DIR_E: cx += 1
+            elif direction == DIR_S: cy += 1
+            elif direction == DIR_W: cx -= 1
+            
+            if self.env.get_at(cx, cy) == WALL_ID:
+                return float(d)
+        return float(d)
+
+    def _dist_to_nearest_battery(self):
+        """Calculates Euclidean distance to the nearest battery in the environment."""
+        min_dist = float('inf')
+        found = False
+        for y in range(GRID_H):
+            for x in range(GRID_W):
+                if self.env.grid[y][x] == BATTERY_ID:
+                    dist = math.sqrt((x - self.x)**2 + (y - self.y)**2)
+                    if dist < min_dist:
+                        min_dist = dist
+                        found = True
+        return min_dist if found else None
 
     def step(self, action):
         """

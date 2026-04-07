@@ -118,36 +118,70 @@ def draw_scaled_plot(screen, rect, data, color, title, label_y):
     screen.blit(min_surf, (rect.x + 5, rect.y + rect.height - 18))
     screen.blit(max_surf, (rect.x + 5, rect.y + 20))
 
-def draw_mini_perception(screen, x, y, size, perception_str):
-    """Renders a small 3x3 visualization of a situational node."""
+def draw_mini_perception(screen, x, y, size, fuzzy_perc_id):
+    """Renders a simplified view of the fuzzy perception vector."""
     import json
+    pygame.draw.rect(screen, BLACK, (x, y, size, size))
+    pygame.draw.rect(screen, DARK_GRAY, (x, y, size, size), 1)
+    
+    font = pygame.font.SysFont('Arial', 10)
     try:
-        grid = json.loads(perception_str)
-        cell = size // 3
-        for r in range(3):
-            for c in range(3):
-                rect = pygame.Rect(x + c*cell, y + r*cell, cell, cell)
-                val = grid[r][c]
-                color = BLACK
-                if val == WALL_ID: color = GRAY
-                elif val == BATTERY_ID: color = GREEN
-                pygame.draw.rect(screen, color, rect)
-                pygame.draw.rect(screen, DARK_GRAY, rect, 1)
+        vector = json.loads(fuzzy_perc_id)
+        # Show top 2-3 features as text
+        for i, feat in enumerate(vector[:3]):
+            txt = font.render(feat.replace("MURO_", ""), True, WHITE)
+            screen.blit(txt, (x + 2, y + 2 + i*10))
     except:
-        pygame.draw.rect(screen, DARK_GRAY, (x, y, size, size))
+        pass
 
-def draw_situational_network(screen, rect, nodes, edges):
-    """Draws the situational graph as a relational network."""
+def draw_territory_map(screen, rect, territory_data):
+    """Draws the global world map from visited (x, y) coordinates."""
+    pygame.draw.rect(screen, (10, 10, 15), rect)
+    pygame.draw.rect(screen, BLUE, rect, 2)
+    
+    if not territory_data:
+        font = pygame.font.SysFont('Arial', 18)
+        msg = font.render("No territory explored yet.", True, GRAY)
+        screen.blit(msg, (rect.centerx - 100, rect.centery))
+        return
+
+    # Scaling cell size to fit the rect
+    cell_w = rect.width / GRID_W
+    cell_h = rect.height / GRID_H
+    
+    for entry in territory_data:
+        tx, ty = entry['x'], entry['y']
+        visits = entry['visits']
+        importance = entry.get('importance', 1.0)
+        
+        draw_x = rect.x + tx * cell_w
+        draw_y = rect.y + ty * cell_h
+        
+        # Color based on visits/importance
+        intensity = min(255, 50 + visits * 20)
+        color = (0, intensity // 2, intensity) if importance <= 1.0 else (intensity, intensity // 2, 0)
+        
+        pygame.draw.rect(screen, color, (draw_x, draw_y, cell_w, cell_h))
+        pygame.draw.rect(screen, (0, 0, 40), (draw_x, draw_y, cell_w, cell_h), 1)
+
+    # Label
+    font = pygame.font.SysFont('Arial', 14)
+    lbl = font.render("GLOBAL TERRITORY MAP", True, WHITE)
+    screen.blit(lbl, (rect.x + 5, rect.y + 5))
+
+def draw_situational_network(screen, rect, nodes, edges, memory_obj=None):
+    """Draws the situational graph as a relational network with symbolic tokens."""
     import math
     pygame.draw.rect(screen, (15, 15, 20), rect)
     pygame.draw.rect(screen, CYAN, rect, 2)
     
     if not nodes: return
     
-    # Simple radial layout for nodes
     center_x, center_y = rect.center
     radius = min(rect.width, rect.height) // 3
     node_pos = {}
+    
+    font = pygame.font.SysFont('Arial', 12)
     
     for i, node_id in enumerate(nodes):
         angle = (i / len(nodes)) * 2 * math.pi
@@ -155,13 +189,32 @@ def draw_situational_network(screen, rect, nodes, edges):
         ny = center_y + radius * math.sin(angle)
         node_pos[node_id] = (nx, ny)
         
-    # Draw edges
-    for s1, action, s2 in edges:
+    # Draw edges with labels
+    for s1, action, s2, weight, cmd_id in edges:
         if s1 in node_pos and s2 in node_pos:
-            pygame.draw.line(screen, DARK_GRAY, node_pos[s1], node_pos[s2], 1)
+            start, end = node_pos[s1], node_pos[s2]
+            color = (max(50, min(255, 100 + int(weight*20))), 100, 200)
+            pygame.draw.line(screen, color, start, end, 2)
+            
+            # Midpoint label for action/concept
+            mid_x = (start[0] + end[0]) / 2
+            mid_y = (start[1] + end[1]) / 2
+            
+            label_text = f"A:{action}"
+            if cmd_id and memory_obj:
+                # Resolve ID to text
+                cur = memory_obj.conn.cursor()
+                cur.execute("SELECT value FROM conceptual_ids WHERE id = ?", (cmd_id,))
+                row = cur.fetchone()
+                if row:
+                    val = row['value']
+                    label_text = f"'{val}'" if val != " " else "[SPACE]"
+            
+            lbl = font.render(label_text, True, YELLOW)
+            screen.blit(lbl, (mid_x, mid_y))
             
     # Draw nodes as mini-perceptions
-    node_size = 30
+    node_size = 40
     for node_id, (nx, ny) in node_pos.items():
         draw_mini_perception(screen, nx - node_size//2, ny - node_size//2, node_size, node_id)
 

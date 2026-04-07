@@ -1,7 +1,11 @@
 import unittest
+import sys
 import json
 import os
 import sqlite3
+# Adjust path to import from the root directory
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from memory import Memory
 from learner import Learner
 from robot import Robot
