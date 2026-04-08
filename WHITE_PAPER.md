@@ -3,45 +3,45 @@
 **Authors**: Marco, W. Grey Walter (in memoriam), W. Fritz (in memoriam)
 
 ## Abstract
-![GL4 Architectual Preview](assets/preview.png)
+![GL5 Architectual Preview](assets/preview.png)
 
-This paper details the evolution and mechanics of the *General Learner 4 (GL4)*, an autonomous intelligent system exploring the intersection of Fuzzy Logic, Bayesian Action Selection, and Asymptotic Memory Decay. Built upon the pioneering cybernetic frameworks of W. Grey Walter's tortoises and W. Fritz's General Learner series, GL4 demonstrates how an agent can iteratively construct a functional understanding of its environment through symbolic grounding and reinforcement learning, free of hardcoded linguistic keywords.
+This paper details the evolution and mechanics of the *General Learner 5 (GL5)*, an autonomous intelligent system exploring the intersection of Fuzzy Logic, Bayesian Action Selection, and Asymptotic Memory Decay. Built upon the pioneering cybernetic frameworks of W. Grey Walter's tortoises and W. Fritz's General Learner series, GL5 demonstrates how an agent can iteratively construct a functional understanding of its environment through symbolic grounding and reinforcement learning, free of hardcoded linguistic keywords.
 
-[**Watch the Live GL4 System Demonstration**](assets/GL4-2026-04-06.mp4)
+[**Watch the Live GL5 System Demonstration**](assets/GL5-2026-05-06.mp5)
 
 ---
 
 ## 1. Introduction & Cybernetic Lineage
 
-The history of autonomous mobile robotics is deeply rooted in attempts to replicate biological homeostasis and stimulus-response arcs. In the late 1940s, **W. Grey Walter** developed autonomous robotic "tortoises" (Machina speculatrix), designed to demonstrate that complex behavior can emerge from simple, interconnected analog circuits prioritizing survival mechanisms like light-seeking and battery recharging [1]. 
+The history of autonomous mobile robotics is deeply rooted in attempts to replicate biological homeostasis and stimulus-response arcs. In the late 1950s, **W. Grey Walter** developed autonomous robotic "tortoises" (Machina speculatrix), designed to demonstrate that complex behavior can emerge from simple, interconnected analog circuits prioritizing survival mechanisms like light-seeking and battery recharging [1]. 
 
 Extending this biological analogy into the computational realm, **W. Fritz** introduced the *General Learner* program in the 1990s [2]. Fritz sought to model cognitive architectures not through monolithic expert systems, but through dynamic, biologically-inspired processes mimicking the neural column behavior of organic brains experiencing conditioning.
 
 Furthermore, we heavily rely on the pedagogical and foundational cybernetics exploration provided by **J. Andrade** in *Thinking with the Teachable Machine* [3], which posits that machine intelligence is best incubated through interactive, iterative teaching loops between the agent and its environment, rather than a priori rule programming.
 
-The General Learner 4 serves as the modern culmination of these philosophies.
+The General Learner 5 serves as the modern culmination of these philosophies.
 
 ---
 
 ## 2. Core Architectural Components
 
 ### 2.1 Fuzzy Perceptual Vectors (Fuzzification)
-Biological agents do not perceive the world in strict binary measurements. In 1965, **Lotfi A. Zadeh** developed **Fuzzy Logic** to formally represent degrees of truth [4]. 
+Biological agents do not perceive the world in strict binary measurements. In 1965, **Lotfi A. Zadeh** developed **Fuzzy Logic** to formally represent degrees of truth [5]. 
 
-In GL4, the agent's ultrasonic distance sensors and internal homeostatic needs (e.g., tiredness) are not processed as absolute integers. A dedicated `FBN` (Fuzzy Bayesian Network) module maps these raw values to linguistic concepts (e.g., `MURO_NORTE:CERCA`, `CANSANCIO:ALTO`) using specific membership functions (Triangular and Trapezoidal). 
+In GL5, the agent's ultrasonic distance sensors and internal homeostatic needs (e.g., tiredness) are not processed as absolute integers. A dedicated `FBN` (Fuzzy Bayesian Network) module maps these raw values to linguistic concepts (e.g., `MURO_NORTE:CERCA`, `CANSANCIO:ALTO`) using specific membership functions (Triangular and Trapezoidal). 
 
 ### 2.2 Agnostic Symbolic Grounding
-A fundamental leap in GL4 is its language agnosticism. Previous iterations relied on English or Spanish keywords. GL4 employs a `Tokenizer` that parses arbitrary strings into internal `conceptual_ids`. Meaning is not pre-assigned; it is derived via positive reinforcement when an arbitrary sound/text correlates with an action that decreases homeostatic stress.
+A fundamental leap in GL5 is its language agnosticism. Previous iterations relied on English or Spanish keywords. GL5 employs a `Tokenizer` that parses arbitrary strings into internal `conceptual_ids`. Meaning is not pre-assigned; it is derived via positive reinforcement when an arbitrary sound/text correlates with an action that decreases homeostatic stress.
 
 ### 2.3 Thompson Sampling (Exploration vs. Exploitation)
-Action selection in uncertain environments represents a classic multi-armed bandit problem. Rather than employing purely greedy or epsilon-greedy strategies, GL4 utilizes **Thompson Sampling** [5]. 
+Action selection in uncertain environments represents a classic multi-armed bandit problem. Rather than employing purely greedy or epsilon-greedy strategies, GL5 utilizes **Thompson Sampling** [5]. 
 
-Proposed initially by William R. Thompson in 1933, this heuristic algorithm maintains a probability distribution representing the agent's "belief" regarding the expected reward of actions. Actions with high uncertainty have wider distributions (encouraging exploration), while repeatedly successful actions narrow in variance (encouraging exploitation). GL4 calculates the probability of rule success using the Beta distribution, $B(\alpha, \beta)$, formed by historic successes and failures.
+Proposed initially by William R. Thompson in 1933, this heuristic algorithm maintains a probability distribution representing the agent's "belief" regarding the expected reward of actions. Actions with high uncertainty have wider distributions (encouraging exploration), while repeatedly successful actions narrow in variance (encouraging exploitation). GL5 calculates the probability of rule success using the Beta distribution, $B(\alpha, \beta)$, formed by historic successes and failures.
 
-### 2.4 Asymptotic Forgetting Curve
-To prevent database bloat and ensure cognitive flexibility, GL4 simulates the **Ebbinghaus Forgetting Curve** [6].
+### 2.5 Asymptotic Forgetting Curve
+To prevent database bloat and ensure cognitive flexibility, GL5 simulates the **Ebbinghaus Forgetting Curve** [6].
 
-First theorized by Hermann Ebbinghaus in 1885, the forgetting curve demonstrates the exponential loss of memory retention over time. During GL4's "sleep cycles" (consolidation events triggered by low battery), the weights of associative rules are diminished asymptotically (`weight * DECAY_RATE`). Synaptic connections (rules) that fall below the `FORGET_THRESHOLD` are permanently pruned from the SQLite cortex, ensuring the agent adapts to dynamic environments rather than remaining paralyzed by outdated information.
+First theorized by Hermann Ebbinghaus in 1885, the forgetting curve demonstrates the exponential loss of memory retention over time. During GL5's "sleep cycles" (consolidation events triggered by low battery), the weights of associative rules are diminished asymptotically (`weight * DECAY_RATE`). Synaptic connections (rules) that fall below the `FORGET_THRESHOLD` are permanently pruned from the SQLite cortex, ensuring the agent adapts to dynamic environments rather than remaining paralyzed by outdated information.
 
 ---
 
@@ -51,74 +51,74 @@ The architecture provides a robust suite of diagnostic visualizers to monitor th
 
 ### 3.1 The Synthesized Reality Engine (POV)
 The agent operates within a grid, but localizes using a pseudo-3D raycasting technique mimicking optical perception.
-![POV Rendering](assets/gl4_pov.jpg)
+![POV Rendering](assets/GL5_pov.jpg)
 
 ### 3.2 Situational Concept Network
 This represents the agent's short-term working memory. Nodes represent fuzzy state vectors, and edges denote the semantic paths (actions and parsed text commands) connecting them. 
-![Situational Concept Agenda](assets/gl4_situation_concept_viso_spatial_agenda.jpg)
+![Situational Concept Agenda](assets/GL5_situation_concept_viso_spatial_agenda.jpg)
 
 ### 3.3 Global Hippocampal Territory Map
 The global map visualization records spatial exploration, utilizing a heat-map overlay to denote visit frequency (`visits`) and experiential relevance (`importance`), serving as the robot's functional Hippocampus.
-![Global Territory Map](assets/gl4_global_map.jpg)
+![Global Territory Map](assets/GL5_global_map.jpg)
 
-### 3.4 Command Induction and Consolidation
+### 3.5 Command Induction and Consolidation
 Through the sleep cycle, sequences of basic atomic actions are synthesized into composite macro commands, significantly reducing processing overhead for recurring navigation sequences.
-![Command Interface](assets/gl4_command.jpg)
+![Command Interface](assets/GL5_command.jpg)
 
 ### 3.5 System Interaction & Vicarious Modes
 The UI provides detailed feedback arrays, exporting full behavioral analytics when required.
-![Vicarious Guided Mode](assets/gl4_vicarious_guided_mode.jpg)
+![Vicarious Guided Mode](assets/GL5_vicarious_guided_mode.jpg)
 
 ### 3.6 Performance Inform & Telemetry
 The integrated cognitive dashboard continuously renders the state of the agent's memory banks, allowing observers to visualize weight changes during active Thompson Sampling.
-![Cognitive Analytics Dashboard](assets/GL4_inform.jpg)
+![Cognitive Analytics Dashboard](assets/GL5_inform.jpg)
 
 ### 3.7 Core Architectural Codebase State
-![Codebase Snippet & Execution](assets/Captura%20de%20pantalla_2026-04-06_21-37-14.jpg)
+![Codebase Snippet & Execution](assets/Captura%20de%20pantalla_2026-05-06_21-37-15.jpg)
 
 ### 3.8 Real-Time Cognitive Inferences Monitor
 A dedicated sub-window below the 2D world view surfaces the agent's internal decision logic on every cycle. The monitor exposes which cognitive pathway is currently driving behavior: **Thompson Sampling** (with per-action Bayesian weights), **Macro Pattern Execution**, **Token Decomposition**, **Associative Memory**, or **Obsession Loop Break**. This provides a direct, interpretable window into the agent's moment-to-moment reasoning process.
-![Real-Time Inference Processing](assets/gl4_show_inner_state_processing_inferences.jpg)
+![Real-Time Inference Processing](assets/GL5_show_inner_state_processing_inferences.jpg)
 
 ### 3.9 Anti-Obsession Saturation Mechanism & Maze Regeneration
-To prevent behavioral fixation (analogous to pathological conditioning loops), GL4 incorporates an **Action Saturation Detector**. When 4 or more identical consecutive actions are registered in `action_history`, the system classifies the agent as `STAGNANT (Obsession)` and applies a deterministic counter-action (e.g., FORWARD breaks rotation loops; a TURN breaks wall-collision loops), with an 80% / 20% forced/random split. 
+To prevent behavioral fixation (analogous to pathological conditioning loops), GL5 incorporates an **Action Saturation Detector**. When 5 or more identical consecutive actions are registered in `action_history`, the system classifies the agent as `STAGNANT (Obsession)` and applies a deterministic counter-action (e.g., FORWARD breaks rotation loops; a TURN breaks wall-collision loops), with an 80% / 20% forced/random split. 
 
 The **NEW MAZE** button allows the researcher to regenerate the environment entirely in place, testing the agent's ability to transfer prior learned rules to novel topologies without resetting memory — a critical test of cognitive generalization.
-![NEW MAZE Button & Environment Regeneration](assets/gl4_button_new_maze.jpg)
+![NEW MAZE Button & Environment Regeneration](assets/GL5_button_new_maze.jpg)
 
 ---
 
-## 4. Future Research Directions
+## 5. Future Research Directions
 
-GL4 represents a functional cognitive substrate. The following theoretical extensions are proposed as a roadmap for the next research phase.
+GL5 represents a functional cognitive substrate. The following theoretical extensions are proposed as a roadmap for the next research phase.
 
-### 4.1 Relational Frame Theory (RFT): From Behaviorism to Cognitivism — **IMPLEMENTED**
+### 5.1 Relational Frame Theory (RFT): From Behaviorism to Cognitivism — **IMPLEMENTED**
 
-The dominant paradigm underlying GL4's current learning engine is **Operant Conditioning** (Skinner, 1938): the agent increases or decreases the frequency of behaviours based on environmental consequences (rewards and punishments via `weight` updates). While sufficient for generating adaptive behaviour, this paradigm cannot model the full scope of human-level symbolic cognition.
+The dominant paradigm underlying GL5's current learning engine is **Operant Conditioning** (Skinner, 1938): the agent increases or decreases the frequency of behaviours based on environmental consequences (rewards and punishments via `weight` updates). While sufficient for generating adaptive behaviour, this paradigm cannot model the full scope of human-level symbolic cognition.
 
 **Relational Frame Theory (RFT)**, developed by **Steven C. Hayes et al. (2001)** [7], proposes that the defining feature of human cognition is the capacity for *derived relational responding* — the ability to frame stimuli in terms of **arbitrarily applicable relations** (e.g., *same as*, *opposite of*, *more than*, *part of*) without direct conditioning.
 
-This represents the critical bridge from behaviourism into cognitivism: the agent does not need to directly experience that `A > B` and `B > C` to derive that `A > C`. It constructs this transitivity from its relational repertoire. This "bidirectionality" of derived relations (if trainer conditions `A→B`, the agent derives `B→A` without training) is a fundamental distinction between biological cognition and current GL4 behaviour.
+This represents the critical bridge from behaviourism into cognitivism: the agent does not need to directly experience that `A > B` and `B > C` to derive that `A > C`. It constructs this transitivity from its relational repertoire. This "bidirectionality" of derived relations (if trainer conditions `A→B`, the agent derives `B→A` without training) is a fundamental distinction between biological cognition and current GL5 behaviour.
 
 ---
 
-### 4.1.1 GL5 Implementation: The RFT Layer
+### 5.1.1 GL5 Implementation: The RFT Layer
 
-General Learner 5 (GL5) extends GL4 with a complete RFT module. The implementation preserves all existing GL4 learning pathways while adding a "shadow reasoning" capability activated only during `sleep_cycle()`.
+General Learner 5 (GL5) extends GL5 with a complete RFT module. The implementation preserves all existing GL5 learning pathways while adding a "shadow reasoning" capability activated only during `sleep_cycle()`.
 
-#### 4.1.1.1 Architecture Summary
+#### 5.1.1.1 Architecture Summary
 
-| Component | GL4 Function | GL5 Enhancement |
+| Component | GL5 Function | GL5 Enhancement |
 |-----------|--------------|-----------------|
 | **Database** | `rules`, `chrono_memory`, `conceptual_ids` | New `relational_frames` table (coordination, opposition) |
 | **Memory Types** | `MEMORY_EPISODIC (0)`, `MEMORY_SEMANTIC (1)` | Added `MEMORY_DERIVED (2)` — rules inferred via RFT |
 | **Decay Rates** | `DECAY_RATE_EPISODIC=0.8`, `DECAY_RATE_SEMANTIC=0.95` | New `DECAY_RATE_DERIVED=0.92` |
 | **Inference** | Direct experience only (Phase A-C) | Added Phase D: RFT Derived Frame Lookup |
 
-#### 4.1.1.2 The Three Core RFT Mechanisms Implemented
+#### 5.1.1.2 The Three Core RFT Mechanisms Implemented
 
 1. **Mutual Entailment (Coordination)**
-   - If concept A maps to action X with high weight, and A is coordinate with B (synonym), then B inherits the same action with reduced weight (`RFT_WEIGHT_FACTOR = 0.4`).
+   - If concept A maps to action X with high weight, and A is coordinate with B (synonym), then B inherits the same action with reduced weight (`RFT_WEIGHT_FACTOR = 0.5`).
    - This mimics **semantic generalisation** in human cognition — once we know "dog" and "canine" are equivalent, learning about dogs transfers to canines without explicit teaching.
 
 2. **Combinatory Entailment (Transitivity)**
@@ -129,7 +129,7 @@ General Learner 5 (GL5) extends GL4 with a complete RFT module. The implementati
    - If concept A has high motivational relevance (high accumulated weight), and A is coordinate with B, B inherits partial motivational relevance.
    - Analogous to **stimulus equivalence** studies in behaviour analysis showing that newly learned relations transfer valence between related stimuli.
 
-#### 4.1.1.3 Implementation Details
+#### 5.1.1.3 Implementation Details
 
 **Phase D Integration**: The new inference phase is inserted after Phase C (Direct Concept Match) and before Thompson Sampling. It only activates when no direct experience exists — pure derived inference.
 
@@ -147,21 +147,21 @@ for frame in frames:
 
 **Sleep Cycle Enhancement**: The RFT engine runs after standard consolidation, detecting new coordinations, closing transitivity, deriving mutual entailments, and applying transformations.
 
-#### 4.1.1.4 Preservation Principle
+#### 5.1.1.5 Preservation Principle
 
-All original GL4 learning pathways maintain **absolute precedence** over derived rules. Direct experiential rules (memory_type 0 or 1) always have higher effective weight than derived rules (memory_type 2). This ensures the agent never "forgets" what it was taught and remains grounded in reality rather than abstract inference.
+All original GL5 learning pathways maintain **absolute precedence** over derived rules. Direct experiential rules (memory_type 0 or 1) always have higher effective weight than derived rules (memory_type 2). This ensures the agent never "forgets" what it was taught and remains grounded in reality rather than abstract inference.
 
 ---
 
-### 4.2 Predictive Coding & Active Inference (Friston, 2010)
+### 5.2 Predictive Coding & Active Inference (Friston, 2010)
 
-The **Free Energy Principle** by **Karl Friston** [8] reframes cognition as continuous *surprise minimization*. Rather than reacting to stimuli, the agent maintains a generative model of the world and acts to minimize the discrepancy between prediction and observation. In GL4 terms, the `agenda` (visuospatial working memory) is a primitive form of top-down predictive state; a full implementation would have the agent continuously generating expected fuzzy vectors before acting and comparing them against observed `fuzzy_processor.get_feature_vector(state)`.
+The **Free Energy Principle** by **Karl Friston** [8] reframes cognition as continuous *surprise minimization*. Rather than reacting to stimuli, the agent maintains a generative model of the world and acts to minimize the discrepancy between prediction and observation. In GL5 terms, the `agenda` (visuospatial working memory) is a primitive form of top-down predictive state; a full implementation would have the agent continuously generating expected fuzzy vectors before acting and comparing them against observed `fuzzy_processor.get_feature_vector(state)`.
 
-### 4.3 Multi-Agent Social Learning
+### 5.3 Multi-Agent Social Learning
 
-GL4 currently operates as a solitary agent. A natural extension is a **multi-agent parliament** where several GL4 instances co-inhabit an environment and can observe each other's actions — enabling **vicarious learning** beyond the current human-guided GUIDE MODE. This would allow emergent social norms, cooperative strategies, and inter-agent concept transfer via shared conceptual ID namespaces.
+GL5 currently operates as a solitary agent. A natural extension is a **multi-agent parliament** where several GL5 instances co-inhabit an environment and can observe each other's actions — enabling **vicarious learning** beyond the current human-guided GUIDE MODE. This would allow emergent social norms, cooperative strategies, and inter-agent concept transfer via shared conceptual ID namespaces.
 
-### 4.4 Literature Review Roadmap
+### 5.5 Literature Review Roadmap
 
 For the next phase, a structured review of the following corpora is planned:
 
@@ -182,7 +182,7 @@ For the next phase, a structured review of the following corpora is planned:
 
 [3] **J. Andrade**, *Thinking with the Teachable Machine*. Internet Archive eBook tracing the pedagogical loops of early theoretical neural networks and teaching systems. [Archived Entry](https://archive.org/details/thinkingwithteac0000andr).
 
-[4] **Lotfi A. Zadeh**, *Fuzzy Sets* (1965). The introduction of infinite-valued logic to accommodate vagueness and uncertainty in algorithmic processing. [Reference via Wikipedia: Fuzzy Logic](https://en.wikipedia.org/wiki/Fuzzy_logic).
+[5] **Lotfi A. Zadeh**, *Fuzzy Sets* (1965). The introduction of infinite-valued logic to accommodate vagueness and uncertainty in algorithmic processing. [Reference via Wikipedia: Fuzzy Logic](https://en.wikipedia.org/wiki/Fuzzy_logic).
 
 [5] **William R. Thompson**, *On the likelihood that one unknown probability exceeds another in view of the evidence of two samples* (1933). The foundation of Bayesian Bandit sampling protocols. [Reference via Wikipedia: Thompson Sampling](https://en.wikipedia.org/wiki/Thompson_sampling).
 
