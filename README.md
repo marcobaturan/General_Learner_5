@@ -1,8 +1,8 @@
-# General Learner 4 (GL4): A Cognitive Autonomous Architecture
+# General Learner 5: A Cognitive Autonomous Architecture
 
 ![GL4 Preview](assets/preview.png)
 
-General Learner 4 (GL4) is an advanced autonomous agent inspired by the **Universal Learner model** (Fritz et al., 1989) and contemporary hippocampal research. This project demonstrates emergent situational mapping, probabilistic decision-making, and biological homeostasis within a real-time 2D simulation.
+General Learner 5 is an advanced autonomous agent inspired by the **Universal Learner model** (Fritz et al., 1989) and contemporary hippocampal research. This project demonstrates emergent situational mapping, probabilistic decision-making, and biological homeostasis within a real-time 2D simulation.
 
 > 📖 **Full Research Documentation**: For a detailed academic overview citing the cybernetic lineage (W. Grey Walter, J. Andrade, W. Fritz) and cognitive formulas, please read our [White Paper](WHITE_PAPER.md).
 
