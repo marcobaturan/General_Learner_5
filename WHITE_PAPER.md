@@ -2,12 +2,17 @@
 
 **Authors**: Marco, W. Grey Walter (in memoriam), W. Fritz (in memoriam)
 
+**Collaborators**: 
+- Claude Code (AI Development Assistant)
+- Antigravity (Architectural Framework)
+- OpenCode Big Pickle (Interactive Development Agent)
+
 ## Abstract
-![GL4 Architectual Preview](assets/preview.png)
+![GL5 Social Dual-Bot Architecture](assets/GL5_social.jpg)
 
-This paper details the evolution and mechanics of the *General Learner 4 (GL4)*, an autonomous intelligent system exploring the intersection of Fuzzy Logic, Bayesian Action Selection, and Asymptotic Memory Decay. Built upon the pioneering cybernetic frameworks of W. Grey Walter's tortoises and W. Fritz's General Learner series, GL4 demonstrates how an agent can iteratively construct a functional understanding of its environment through symbolic grounding and reinforcement learning, free of hardcoded linguistic keywords.
+This paper details the evolution and mechanics of the *General Learner 5.1 (GL5.1)*, an autonomous multi-agent intelligent system exploring the intersection of Fuzzy Logic, Bayesian Action Selection, Asymptotic Memory Decay, and emergent social interaction between two autonomous cognitive agents. Built upon the pioneering cybernetic frameworks of W. Grey Walter's tortoises and W. Fritz's General Learner series, GL5.1 demonstrates how two agents can iteratively construct functional understanding of their shared environment through symbolic grounding, reinforcement learning, and physical interaction principles — free of hardcoded linguistic keywords.
 
-[**Watch the Live GL4 System Demonstration**](assets/GL4-2026-04-06.mp4)
+[**Watch the Live GL5.1 Dual-Bot System Demonstration**](assets/GL5-2026-04-09_20.19.50.mp4)
 
 ---
 
@@ -19,7 +24,44 @@ Extending this biological analogy into the computational realm, **W. Fritz** int
 
 Furthermore, we heavily rely on the pedagogical and foundational cybernetics exploration provided by **J. Andrade** in *Thinking with the Teachable Machine* [3], which posits that machine intelligence is best incubated through interactive, iterative teaching loops between the agent and its environment, rather than a priori rule programming.
 
-The General Learner 4 serves as the modern culmination of these philosophies.
+The General Learner 5.1 serves as the modern culmination of these philosophies, extending the single-agent architecture to a dual-agent system for studying emergent social behavior.
+
+---
+
+## 1.1 Development Environment & Research Methodology
+
+### Hardware Platform
+| Component | Specification |
+|-----------|---------------|
+| **CPU** | AMD Ryzen 7 4000 Series (Renoir) — 8 cores @ 2.0 GHz |
+| **RAM** | 16 GB DDR4 (shared with iGPU) — Budget: ~4 GB max for simulation |
+| **Storage** | 476 GB NVMe SSD (Kingston A400) |
+| **GPU** | Integrated Graphics (iGPU) — Vega 6 (Renoir) |
+| **Display** | 1920x1080 @ 60Hz |
+
+### Software Stack
+| Layer | Technology |
+|-------|------------|
+| **Runtime** | Python 3.11.2 |
+| **Graphics Engine** | Pygame 2.1.2 (CPU-only rendering, capped at 30 FPS) |
+| **Database** | SQLite3 (in-memory, dual independent DBs: bot1_memory.db, bot2_memory.db) |
+| **Operating System** | Debian 12 (Bookworm) Linux kernel 6.1 |
+| **Package Manager** | UV (primary) / pip (fallback) |
+
+### Development Methodology
+This research combines **Spec-Driven Development (SDD)** with **Human-in-the-Loop (HITL)** protocols:
+
+1. **Spec-Driven Development**: Each feature is implemented against formal specifications (BRIEFING.md) with explicit integration matrices before coding begins.
+
+2. **Human-in-the-Loop (HITL)**: Critical validation checkpoints require human approval:
+   - Phase 0: Spec interpretation review (mandatory)
+   - Before any database schema change
+   - Before modifying existing agent architecture
+   - Before git push to main branch
+
+3. **Interactive Development**: Uses OpenCode Big Pickle as the primary development agent, with Claude Code assisting in architectural decisions.
+
+4. **Vibe Coding**: The project embraces emergent design — complex behaviors (territory formation, collision avoidance) emerge from simple local rules rather than being explicitly programmed.
 
 ---
 
@@ -161,6 +203,106 @@ The **Free Energy Principle** by **Karl Friston** [8] reframes cognition as cont
 
 GL4 currently operates as a solitary agent. A natural extension is a **multi-agent parliament** where several GL4 instances co-inhabit an environment and can observe each other's actions — enabling **vicarious learning** beyond the current human-guided GUIDE MODE. This would allow emergent social norms, cooperative strategies, and inter-agent concept transfer via shared conceptual ID namespaces.
 
+---
+
+## 5. GL5.1: Dual-Bot Social Interaction — **IMPLEMENTED**
+
+### 5.1 Overview
+
+GL5.1 extends GL5 with two independent autonomous agents sharing a common maze environment. This implementation introduces physical interaction principles, mutual recognition, and experimental framework for observing emergent social behavior between cognitive agents.
+
+### 5.2 The Maze Reset Mechanism (Psychosis Cure)
+
+**Problem**: When a bot consumes all batteries, no goals remain. The bot enters a psychological state analogous to psychosis — random movement with no learning signal (TOC: Touch-of-Contract/obsessive-compulsive behavior).
+
+**Solution**: When all batteries are consumed, a special **RESET_BUTTON** tile (bright green) appears at a random valid ground position. When the bot steps on this tile:
+- All batteries respawn at original positions
+- RESET_BUTTON disappears
+- Bot resumes normal search behavior
+
+This creates an **endless search loop** — the bot always has a goal, preventing pathological stagnation.
+
+### 5.3 Bot 2 Independent Database
+
+Each bot maintains its own independent SQLite database:
+- **Bot 1**: `bot1_memory.db`
+- **Bot 2**: `bot2_memory.db`
+
+Both databases share identical schema (rules, chrono_memory, places, agenda) but maintain strict independence — no cross-read during runtime. Bot 2 starts with empty memory, demonstrating how two identical architectures diverge based solely on experience.
+
+### 5.4 Physical Interaction Principles
+
+Three fundamental principles govern bot-to-bot interaction:
+
+#### 5.4.1 Pauli Exclusion (Spatial Exclusion)
+**Rule**: Two bots cannot occupy the same tile simultaneously.
+**Implementation**: Before any move, check if target tile is occupied by the other bot. If occupied: action blocked, no movement, no energy cost. Blocked action counts as a neutral event.
+
+#### 5.4.2 Pain on Impact
+**Trigger**: Bot attempts to move into a tile occupied by the other bot.
+**Effect**: Both attacker and defender receive `-IMPACT_UNITS` (5) energy penalty. Collision is mutual — both suffer pain. This implements a fundamental homeostatic principle: physical contact between agents is aversive, encouraging spatial separation.
+
+#### 5.4.3 Mutual Recognition
+**Mechanism**: Each bot has a unique `self_id` field (Bot 1: id=1, Bot 2: id=2). When a bot perceives an adjacent tile occupied, it reads the occupant's ID and compares against its own `self_id`.
+
+The perception system returns **ID 99** for the other bot in the 3x3 local grid. The learner's `learn()` method detects this and:
+- If `perceived_id != self_id`: Recognized as **OTHER_BOT_DETECTED**
+- The bot learns `other_bot_{id}_{direction}` objective values
+- This differentiates "not me" from "self in mirror" — critical for theory of mind
+
+### 5.5 Dual Control Panel UI
+
+Two square buttons ("BOT 1", "BOT 2") enable manual switching between bot views. Both bots continue running simultaneously regardless of display selection. The active button highlights in orange.
+
+### 5.6 Experimental Framework
+
+Metrics logged to `experiment_log.csv`:
+- **collision_count**: Total collisions per bot per session
+- **energy_delta_after_collision**: Energy change following each collision  
+- **battery_sharing_ratio**: Percentage of batteries consumed by each bot
+- **proximity_events**: Number of times bots are within 2 tiles of each other
+- **reset_trigger_count**: How many times RESET_BUTTON was activated
+
+### 5.7 Research Hypotheses
+
+| Hypothesis | Description |
+|------------|-------------|
+| **H1** | Bots learn to avoid each other after repeated collisions (competition) |
+| **H2** | Bots converge on opposite areas of the maze (territory formation) |
+| **H3** | Bots show no learning from collisions (random behavior persists) |
+| **H4** | Bots develop implicit cooperation (one charges while other explores) |
+
+### 5.8 Theoretical Foundations for Emergent Social Behavior
+
+The emergence of social behavior in our dual-bot system draws from several foundational research traditions:
+
+#### 5.8.1 Thomas Schelling (1971) — Segregation Model
+Schelling created the first **Multi-Agent System (MAS)** using cellular automata on a board. Agents with slight individual preferences (e.g., "I want at least 30% similar neighbors") spontaneously produced massive segregated patterns. This demonstrates how **simple local rules** create **complex global social structures**.
+
+*Relevance*: Our bots, through simple collision-avoidance and pain signals, may develop emergent territories without explicit programming.
+
+#### 5.8.2 Robert Axelrod (1984) — Evolution of Cooperation
+Axelrod's famous **Iterated Prisoner's Dilemma** tournaments demonstrated that "Tit for Tat" (cooperate first, then mirror opponent) emerges as the winning strategy. This proved that **complex social cooperation** can arise from **simple local interactions** without central authority.
+
+*Relevance*: Our bots may develop implicit cooperation patterns — one exploring while another rests, or alternating access to batteries.
+
+#### 5.8.3 Craig Reynolds (1986) — Boids
+Reynolds' "Boids" algorithm uses three rules (Separation, Alignment, Cohesion) to simulate flocking behavior. No robot is "told" to form a flock — it **emerges** from local rules.
+
+*Relevance*: Our collision detection (Pauli Exclusion) is analogous to Boids' Separation rule. We may observe emergent "flocking" or avoidance patterns.
+
+#### 5.8.4 John von Neumann — Cellular Automata
+The foundational work on self-reproducing automata and logical foundations of computation. Von Neumann's cellular automata demonstrated that **complex life-like behavior** could emerge from **simple logical rules** on a grid.
+
+*Relevance*: Our grid-based maze is a direct descendant of von Neumann's cellular automata. The bots are essentially von Neumann agents in a grid world.
+
+#### 5.8.5 Rodney Brooks — Subsumption Architecture
+Brooks famously argued that complex intelligent behavior emerges from **layered reflexes** rather than symbolic planning. His "intelligence without representation" thesis suggests that our bots' behavior emerges from direct sensorimotor loops, not internal world models.
+
+*Relevance*: Our bots operate via direct perception-action loops (Fuzzy Logic → Thompson Sampling), with no explicit "social behavior" module. Any social interaction is emergent.
+
+---
+
 ### 4.4 Literature Review Roadmap
 
 For the next phase, a structured review of the following corpora is planned:
@@ -193,3 +335,13 @@ For the next phase, a structured review of the following corpora is planned:
 [8] **Karl J. Friston**, *The free-energy principle: a unified brain theory?* (2010). Nature Reviews Neuroscience, 11(2), 127–138. Introduces Active Inference and the Free Energy Principle as a unifying framework for perception, action, and learning in biological organisms.
 
 [9] **Brian M. McGonigle & Michael Chalmers**, *Are monkeys logical?* (1992). Journal of Experimental Psychology: Animal Learning and Cognition, 18(3), 235-250. Demonstrates transitive inference in non-human primates, supporting the cognitive basis for RFT's combinatory entailment mechanism.
+
+[10] **Thomas C. Schelling**, *The Strategy of Conflict* (1960/1971). Harvard University Press. Founded modern game theory and demonstrated emergent segregation through cellular automata models of social preference.
+
+[11] **Robert Axelrod**, *The Evolution of Cooperation* (1984). Basic Books. The seminal work on how simple Tit-for-Tat strategy produces cooperation in iterated Prisoner's Dilemma without central authority.
+
+[12] **Craig W. Reynolds**, *Flocks, Herds, and Schools: A Distributed Behavioral Model* (1987). SIGGRAPH '87. Introduced Boids algorithm demonstrating emergent group behavior from local Separation, Alignment, and Cohesion rules.
+
+[13] **John von Neumann**, *Theory of Self-Reproducing Automata* (1966). University of Illinois Press. Posthumous collection establishing cellular automata as foundation for computational agents exhibiting life-like behavior.
+
+[14] **Rodney A. Brooks**, *Intelligence without representation* (1991). Artificial Intelligence Journal. The Subsumption Architecture paper arguing complex behavior emerges from layered reflexes, not symbolic planning.

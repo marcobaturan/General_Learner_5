@@ -1,113 +1,120 @@
-# General Learner 4 (GL4): A Cognitive Autonomous Architecture
+# General Learner 5.1 (GL5.1): Dual-Bot Social Interaction Architecture
 
-![GL4 Preview](assets/preview.png)
+![GL5 Social Preview](assets/GL5_social.jpg)
 
-General Learner 4 (GL4) is an advanced autonomous agent inspired by the **Universal Learner model** (Fritz et al., 1989) and contemporary hippocampal research. This project demonstrates emergent situational mapping, probabilistic decision-making, and biological homeostasis within a real-time 2D simulation.
+General Learner 5.1 (GL5.1) extends GL4/GL5 with **two autonomous cognitive agents** sharing a 2D maze environment. This research platform explores emergent social behavior, mutual recognition, and physical interaction principles between artificial agents — drawing from Schelling's segregation models, Axelrod's cooperation evolution, and Brooks' subsumption architecture.
 
 > 📖 **Full Research Documentation**: For a detailed academic overview citing the cybernetic lineage (W. Grey Walter, J. Andrade, W. Fritz) and cognitive formulas, please read our [White Paper](WHITE_PAPER.md).
 
 ---
 
 ## 📽️ System Demonstration
-### Watch General Learner 4 in Action
-[![Download Demo Video](https://img.shields.io/badge/DOWNLOAD-Demo_Video-blue?style=for-the-badge&logo=video)](GL5-2026-04-08_17_38_24.mp4)
+### Watch General Learner 5.1 Dual-Bot in Action
+[![Download Demo Video](https://img.shields.io/badge/DOWNLOAD-Demo_Video-blue?style=for-the-badge&logo=video)](assets/GL5-2026-04-09_20.19.50.mp4)
+
+---
+
+## 🔬 Research Platform: Dual-Bot Social Interaction
+
+GL5.1 implements a **Multi-Agent System (MAS)** where two independent cognitive agents co-inhabit a 2D maze. This enables quantitative study of emergent social behaviors predicted by foundational research:
+
+| Theoretical Foundation | Researcher | Application |
+|------------------------|------------|-------------|
+| Segregation from local preferences | Thomas Schelling (1971) | Territory formation via collision avoidance |
+| Evolution of cooperation | Robert Axelrod (1984) | Implicit cooperation patterns |
+| Emergent flocking | Craig Reynolds (1987) | Boids-like separation behavior |
+| Subsumption architecture | Rodney Brooks (1991) | Reflex-based social interaction |
+
+### Key Implemented Features
+
+- **Pauli Exclusion**: Bots block each other's movement (no shared tiles)
+- **Pain on Impact**: Collision triggers -5 energy penalty to both agents
+- **Mutual Recognition**: Each bot detects other via ID 99 in perception grid
+- **Self vs Other Differentiation**: Mirror reflection = self; other bot = not-self
+- **Psychosis Cure (Reset Button)**: Prevents TOC (Touch-of-Contract) when maze empty
+- **Independent Memory**: Separate SQLite databases for each agent
+- **Experimental CSV Logging**: Quantitative metrics for hypothesis testing
 
 ---
 
 ## 🔭 2.5D Raycasting POV (Robot Vision)
 
-The GL4 now features a **Wolfenstein-style 2.5D Rendering Engine**. This allows the user to see exactly what the robot "sees" in real-time, providing an immersive perspective on its spatial navigation.
-
-- **Directional Shading**: Walls are rendered with differential brightness (N/S vs E/W) to create realistic contours and depth.
-- **Visual Grounding**: The POV system helps the user understand why the robot identifies specific 3x3 patterns as stable landmarks.
+The GL5.1 POV renders each bot's egocentric perspective with dynamic coloring:
+- **Self in mirror**: Bot sees itself in its own color (blue/orange)
+- **Other bot**: Rendered in opposite color to viewer
 
 ![Robot POV Vision](assets/gl4_pov.jpg)
 *Figure 1: The 2.5D Raycasting view showing the robot's egocentric perspective.*
 
 ---
 
-## 🔬 Cognitive Architecture (The 4 Pillars)
+## 🖥️ Development Environment
 
-The GL4 architecture separates raw perception from logical representation, allowing for high-level "Mental Imagery" and adaptive planning.
+### Hardware Platform
+| Component | Specification |
+|-----------|---------------|
+| **CPU** | AMD Ryzen 7 4000 Series (Renoir) — 8 cores |
+| **RAM** | 16 GB (shared with iGPU) — Budget: ~4 GB max |
+| **Storage** | 476 GB NVMe SSD |
+| **Display** | Integrated GPU (iGPU) — CPU-only rendering |
+| **OS** | Debian 12 (Bookworm) Linux |
 
-### 1. Situational World Map (Hippocampal Locale Mapping)
-Inspired by **O'Keefe & Nadel**, the agent constructs a **Directed Conceptual Graph**:
-- **Nodes**: Each unique 3x3 visual pattern ($S_n$) is treated as a stable "Landmark".
-- **Edges**: The agent learns the transition $(S_1, A) \to S_2$.
+### Software Stack
+| Layer | Technology |
+|-------|------------|
+| **Runtime** | Python 3.11.2 |
+| **Graphics** | Pygame 2.1.2 (CPU rendering, 30 FPS cap) |
+| **Database** | SQLite3 (in-memory, dual independent DBs) |
+| **OS** | Debian 12 (Linux) |
+| **Package Manager** | UV (recommended) / pip |
 
-![Situational Mapping Dashboard](assets/gl4_mapworld.jpg)
-*Figure 2: The Situational Network showing the robot's internal representation of the environment.*
-
-### 2. Visuospatial Agenda (Mental Simulation)
-The system maintains a **Visuospatial Sketchpad** (Working Memory):
-- When a distal goal is detected, the agent performs a mental BFS (Breadth-First Search) through its Situational Map.
-- It generates an **Agenda**: a sequence of future "Expected Landmarks."
-
-### 3. Bayesian Thompson Sampling (Probabilistic Decision Engine)
-To balance exploration and exploitation, GL4 utilizes **Bayesian Inference**:
-- **Beta Distribution**: Each action is a probability curve.
-- **Dynamic Sampling**: The robot "samples" its beliefs for every step, leading to more "curious" behavior when rules are weak and "decisive" behavior when rules are expert-level.
-
-### 4. Biological Homeostasis & Forgetting
-The system implements a biological maintenance cycle (Sleep/Dream):
-- **Ebbinghaus Forgetting Curve**: Memories decay over time to prevent cognitive overload.
-- **Differential Decay**: Crucial spatial landmarks enjoy a **Protected Status** (5x slower decay).
-
----
-
-## 🗣️ Symbolic Command Grounding (Natural Language)
-
-Unlike systems with hardcoded keywords, GL4 implements **Symbolic Grounding**:
-- **Arbitrary Association**: The robot learns to associate any text string (e.g., "GIRA", "DERECHA", "MOVE") with physical actions through experience.
-- **Command Priority**: Once a symbol is "grounded" (associated with a successful outcome), the robot prioritizes user commands over its own autonomous drives.
-
-![Command Interface](assets/gl4_command.jpg)
-*Figure 3: The Symbolic Command and Homeostatic Sidebar.*
-
-### 5. Cognitive Macro Learning & Command Decomposition
-The GL4 now possesses the ability to **"chunk"** actions and decompose complex sentences:
-- **Macro Induction**: During the `SLEEP` cycle, the agent scans its history for repetitive patterns under the same command string (e.g., "L-SHAPE") and creates a **Composite Rule**.
-- **Recursive Decomposition**: The agent can now process multi-part commands like "Avanza y Gira". It splits the string by conjunctions (`,`, `y`) and executes the sub-parts sequentially using its `Active Plan` buffer.
-- **Sequential Execution**: Loaded macros are stored in the user's `active_plan`, allowing the robot to execute long behavioral sequences from a single textual trigger.
-
----
-
-## 🦮 Guided Mode (Vicarious Learning)
-
-In **Guided Mode**, the user can "lead" the robot through a path. 
-- **Forced Movement**: Clicks in this mode immediately move the robot, acting as "Forced Instruction."
-- **Expert Absorption**: The robot performs **Vicarious Learning**, absorbing the user's expertise directly into its Situational Map.
-
-![Vicarious Learning in Guided Mode](assets/gl4_vicarious_guided_mode.jpg)
-*Figure 4: Guided Mode highlighting the robot's prediction of intended target cells.*
-
----
-
-## 📊 Performance Inform / Report
-
-The **Cognitive Dashboard** provides real-time telemetry on learning efficiency, rule consolidation, and objective achievement.
-
-![Cognitive Reporting Dashboard](assets/GL4_inform.jpg)
-*Figure 5: The Performance Analytics panel displaying live learning trends.*
-
----
-
-## 🛠️ Codebase Execution
-Capturing the simulation and terminal state during a training run.
-![Codebase Execution](assets/Captura%20de%20pantalla_2026-04-06_21-37-14.jpg)
+### Development Tools
+| Tool | Purpose |
+|------|---------|
+| **OpenCode Big Pickle** | Interactive CLI development agent |
+| **Claude Code** | AI development assistant |
+| **Antigravity** | Architectural framework (AG_Structure) |
+| **Git** | Version control |
 
 ---
 
 ## 🚀 Installation & Usage
-1. **Requirements**: Python 3.11+, PyGame, SQLite3.
-2. **Run**:
-   ```bash
-   python main.py
-   ```
-3. **Tests**:
-   ```bash
-   python -m unittest discover tests
-   ```
+
+### Quick Install (UV - Recommended)
+```bash
+# Install UV if not available
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv pip install -r requirements.txt
+
+# Run
+python3 main.py
+```
+
+### Alternative (pip)
+```bash
+pip install -r requirements.txt
+python3 main.py
+```
+
+### Requirements File (requirements.txt)
+```
+pygame>=2.1.0
+psutil>=5.9.0
+```
+
+### Controls
+- **Arrow Keys**: Move robot manually
+- **D**: Toggle autonomous mode
+- **S**: Sleep/dream (consolidate memory)
+- **M**: Mirror test (self-recognition)
+- **SPACE**: Pause/Resume
+- **ESC**: Quit
+- **Click BOT 1 / BOT 2**: Switch display between agents
 
 ---
-*Developed by Marco Baturan | Cybernetic Legacy: W. Grey Walter, W. Fritz, J. Andrade.*
+
+*Developed by Marco Baturan | Collaborators: Claude Code, Antigravity, OpenCode Big Pickle*
+*Cybernetic Legacy: W. Grey Walter, W. Fritz, J. Andrade*
+*Research Lineage: Schelling, Axelrod, Reynolds, von Neumann, Brooks*

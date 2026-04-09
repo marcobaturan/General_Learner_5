@@ -1,5 +1,5 @@
 """
-General Learner 5 (GL5) — Artificial Cognitive Engine
+General Learner 5 (GL5) -- Artificial Cognitive Engine
 
 This module implements the core cognitive architecture of the GL5 agent,
 extending GL4's operant conditioning with Relational Frame Theory (RFT)
@@ -12,8 +12,8 @@ The architecture implements a multi-phase decision cascade:
 - Phase D: RFT derived inference (novel contribution of GL5)
 
 Based on:
-- Fritz, W. (1989). The General Learner — modelling neural column behaviour.
-- Skinner, B.F. (1938). The Behaviour of Organisms — operant conditioning.
+- Fritz, W. (1989). The General Learner -- modelling neural column behaviour.
+- Skinner, B.F. (1938). The Behaviour of Organisms -- operant conditioning.
 - Hayes, S.C. et al. (2001). Relational Frame Theory.
 - O'Keefe, J. & Nadel, L. (1978). The Hippocampus as a Cognitive Map.
 
@@ -70,7 +70,7 @@ class Learner:
         self.active_plan = []
 
         # Visuospatial working memory: expected future perceptions
-        # Models the prefrontal cortex's prospective memory — 'what
+        # Models the prefrontal cortex's prospective memory -- 'what
         # should I expect to see after this action?'
         self.agenda = []
 
@@ -122,19 +122,22 @@ class Learner:
         self._act_rules_cache = None
         self._act_rules_timestamp = 0
 
-    def act(self, robot, text_command=None):
+    def act(self, robot, text_command=None, other_bot=None):
         """
-        Determines the next action — the core decision function.
+        Determines the next action -- the core decision function.
 
         Implements a hierarchical cascade of inference pathways,
         each representing increasingly abstract cognitive processes:
 
-        PHASE A: MACRO MATCH (Basal Ganglia — Procedural Memory)
-        ─────────────────────────────────────────────────────────
+        GL5 Dual-Bot: other_bot parameter enables mutual recognition
+        in perception (OTHER_BOT_DETECTED concept).
+
+        PHASE A: MACRO MATCH (Basal Ganglia -- Procedural Memory)
+        ---------------------------------------------------------
         The most specific cognitive pathway. Retrieves pre-learned
         action sequences (macros) from procedural memory.
 
-        Biological analogue: The basal ganglia's habit system —
+        Biological analogue: The basal ganglia's habit system --
         once a behavioural sequence is learned (e.g., 'navigate
         to charger'), it executes automatically without ongoing
         cortical supervision. Represented in the brain by the
@@ -143,27 +146,27 @@ class Learner:
         Reference: Graybiel, A.M. (2008). Habits, rituals, and
         the evaluative brain. Annual Review of Neuroscience, 31, 359-387.
 
-        PHASE B: TOKEN DECOMPOSITION (Broca's Area — Compositional Processing)
-        ─────────────────────────────────────────────────────────────────────
+        PHASE B: TOKEN DECOMPOSITION (Broca's Area -- Compositional Processing)
+        ----------------------------------------------------------------------
         Breaks complex commands into word-level components, executing
         each in sequence. Models the brain's ability to understand
-        compositional semantics — 'forward AND right' becomes two
+        compositional semantics -- 'forward AND right' becomes two
         separate action selections.
 
         Biological analogue: Broca's area in the left inferior
-        frontal gyrus — responsible for syntactic parsing and
+        frontal gyrus -- responsible for syntactic parsing and
         compositional language understanding.
 
         Reference: Friederici, A.D. (2011). The brain's distinct
         network components for language. Nature Reviews Neuroscience, 12, 78-88.
 
-        PHASE C: ASSOCIATIVE MEMORY (Cortex — Semantic Retrieval)
-        ────────────────────────────────────────────────────────
+        PHASE C: ASSOCIATIVE MEMORY (Cortex -- Semantic Retrieval)
+        ----------------------------------------------------------
         General concept-to-action mappings, ignoring specific
-        perceptual context. The 'semantic memory' layer — knowing
+        perceptual context. The 'semantic memory' layer -- knowing
         that 'this concept generally leads to this action'.
 
-        Biological analogue: The neocortex's semantic memory system —
+        Biological analogue: The neocortex's semantic memory system --
         the distributed store of learned associations, particularly
         in inferior temporal cortex for object concepts and premotor
         cortex for action concepts.
@@ -171,8 +174,8 @@ class Learner:
         Reference: Pulvermüller, F. (2012). Meaning and the brain:
         the semantic subsumption of conceptual knowledge. Cortex, 48(5), 641-647.
 
-        PHASE D: RFT DERIVED INFERENCE (Prefrontal Cortex — Abstract Reasoning)
-        ────────────────────────────────────────────────────────────────────────
+        PHASE D: RFT DERIVED INFERENCE (Prefrontal Cortex -- Abstract Reasoning)
+        ------------------------------------------------------------------------
         GL5's novel contribution. When no direct experience exists,
         uses derived relational networks to infer an action.
 
@@ -180,28 +183,28 @@ class Learner:
         with AVANZA, then GO → FORWARD is inferred without direct teaching.
 
         Biological analogue: The prefrontal cortex's abstract relational
-        reasoning — the ability to see that 'X is like Y' without having
+        reasoning -- the ability to see that 'X is like Y' without having
         directly experienced X and Y together. This is the cognitive
         capacity that distinguishes human reasoning from pure conditioning.
 
         Reference: Hayes, S.C., Barnes-Holmes, D., & Roche, B. (2001).
         Relational Frame Theory. Chapter 4: Derived Relational Responding.
 
-        PHASE 1: ACTIVE PLAN EXECUTION (Striatum — Habitual Sequence)
-        ──────────────────────────────────────────────────────────────
+        PHASE 1: ACTIVE PLAN EXECUTION (Striatum -- Habitual Sequence)
+        --------------------------------------------------------------
         If a plan exists from prior Phase A/B decomposition, execute
         sequentially without re-evaluation. Models the automatic
         execution of learned motor programmes.
 
-        PHASE 1.5: STAGNATION DETECTION (VTA — Novelty/Exploration)
-        ───────────────────────────────────────────────────────────
+        PHASE 1.5: STAGNATION DETECTION (VTA -- Novelty/Exploration)
+        -----------------------------------------------------------
         Detects behavioural loops and forces exploration. The brain's
-        dopamine system tracks prediction errors — when outcomes are
+        dopamine system tracks prediction errors -- when outcomes are
         worse than expected (or unchanged despite action), the system
         shifts from exploitation to exploration.
 
         PHASE 2: THOMPSON SAMPLING (Exploration/Exploitation Balance)
-        ───────────────────────────────────────────────────────────────
+        ---------------------------------------------------------------
         When no plan exists and no direct rule matches, uses Bayesian
         sampling to select actions. Models the brain's exploration-
         exploitation trade-off, balancing familiar rewarding actions
@@ -214,8 +217,8 @@ class Learner:
         Returns:
             int: The selected action (ACT_LEFT, ACT_RIGHT, etc.)
         """
-        # Get current perceptual state
-        state = robot.get_state()
+        # Get current perceptual state (pass other_bot for collision-aware perception)
+        state = robot.get_state(other_bot)
         fuzzy_vector = self.fuzzy_processor.get_feature_vector(state)
         perc_id = json.dumps(fuzzy_vector)
 
@@ -325,7 +328,7 @@ class Learner:
                 return best_action
 
             # --- PHASE D: RFT DERIVED INFERENCE ---
-            # Only activates when Phases A-C have found no match —
+            # Only activates when Phases A-C have found no match --
             # the 'shadow reasoning' fallback of GL5
             frames = self.memory.get_frames_for_concept(full_text_id)
             for frame in frames:
@@ -382,7 +385,7 @@ class Learner:
 
         # 1.5 STAGNATION CHECK
         # ====================
-        # Detects behavioural loops — analogous to the brain's
+        # Detects behavioural loops -- analogous to the brain's
         # detection of prediction error when actions produce
         # no novel outcomes
         self._update_stagnation(robot)
@@ -494,11 +497,11 @@ class Learner:
 
         Computes total weight per action for a given conceptual ID,
         returning the highest-weighted action. This implements the
-        brain's pattern completion — given a concept, retrieve
+        brain's pattern completion -- given a concept, retrieve
         the most frequently reinforced associated action.
 
         Biological analogue: The hippocampal CA3 auto-associative
-        network's pattern completion — given a partial cue (concept),
+        network's pattern completion -- given a partial cue (concept),
         retrieving the most strongly associated complete pattern (action).
 
         Args:
@@ -527,7 +530,7 @@ class Learner:
         for a path from the current situation to a goal state.
 
         Biological analogue: The prefrontal cortex's prospective
-        coding — mentally simulating future states and planning
+        coding -- mentally simulating future states and planning
         multi-step trajectories. The 'agenda' stores expected
         perceptual outcomes of planned actions.
 
@@ -602,7 +605,7 @@ class Learner:
         Returns the situational transition graph for visualisation.
 
         Used by the UI to display the agent's internal model of
-        the world — a cognitive map of perception-action links.
+        the world -- a cognitive map of perception-action links.
 
         Uses caching to prevent repeated heavy database queries.
         """
@@ -655,19 +658,21 @@ class Learner:
         self._situational_graph_timestamp = current_time
         return list(nodes), edges
 
-    def learn(self, robot, action, reward, text_command=None):
+    def learn(self, robot, action, reward, text_command=None, other_bot=None):
         """
         Records an experience in episodic memory.
 
-        This is the 'encoding' function — every perception-action-outcome
+        This is the 'encoding' function -- every perception-action-outcome
         triplet is stored in the episodic buffer for later consolidation.
 
         Also updates the spatial cognitive map (territory), modelling
         the hippocampal formation's dual function: what happened
         (episodic) and where it happened (spatial).
 
+        GL5 Dual-Bot: other_bot parameter enables collision event recording.
+
         Biological analogue: The hippocampal CA1 region's place cells
-        — simultaneously encoding 'what' (event) and 'where' (location)
+        -- simultaneously encoding 'what' (event) and 'where' (location)
         in the same neural ensemble.
 
         Reference: Eichenbaum, H. (2014). Time cells in the hippocampus:
@@ -678,8 +683,9 @@ class Learner:
             action: The action performed
             reward: The reinforcement received
             text_command: Optional command that triggered action
+            other_bot: Optional other robot for collision detection
         """
-        state = robot.get_state()
+        state = robot.get_state(other_bot)
         fuzzy_vector = self.fuzzy_processor.get_feature_vector(state)
         perc_id = json.dumps(fuzzy_vector)
 
@@ -813,6 +819,82 @@ class Learner:
             if self.objective_values[mirror_perc] > 8.0:
                 self.objective_values[mirror_perc] = 8.0
 
+        # 1.8 GL5 Dual-Bot: Other Bot Recognition
+        # =======================================
+        # When a bot sees another robot in perception, it detects the
+        # other bot's ID and compares it with its own self_id.
+        # This enables mutual recognition and prevents self-confusion.
+        OTHER_BOT_ID = 99  # Magic number for other bot in perception grid
+
+        has_other_bot = False
+        other_bot_direction = None
+        if perception:
+            directions = [
+                (-1, -1),
+                (0, -1),
+                (1, -1),  # North row
+                (-1, 0),
+                (1, 0),  # Middle row
+                (-1, 1),
+                (0, 1),
+                (1, 1),
+            ]  # South row
+            dir_names = {
+                (-1, -1): "NW",
+                (0, -1): "N",
+                (1, -1): "NE",
+                (-1, 0): "W",
+                (1, 0): "E",
+                (-1, 1): "SW",
+                (0, 1): "S",
+                (1, 1): "SE",
+            }
+            for dy in range(3):
+                for dx in range(3):
+                    if dy == 1 and dx == 1:
+                        continue  # Skip center (self position)
+                    if dy == 1 and dx == 1:
+                        continue
+                    if dy == 1 and dx == 1:
+                        continue
+                    if perception[dy][dx] == OTHER_BOT_ID:
+                        has_other_bot = True
+                        other_bot_direction = dir_names.get((dx - 1, dy - 1), "?")
+
+        if has_other_bot and other_bot is not None:
+            # Other bot detected! Compare self_id
+            perceived_id = other_bot.self_id
+            self_id = robot.self_id
+
+            if perceived_id != self_id:
+                # OTHER BOT RECOGNIZED - different from self
+                # This is the foundation for theory of mind
+                self.last_inference_info = {
+                    "type": "OTHER_BOT_DETECTED",
+                    "details": f"Bot{perceived_id} seen at {other_bot_direction} (I'm Bot{self_id})",
+                }
+
+                # Learn that seeing OTHER bot is different from self
+                # This prevents self-confusion - important for social behavior
+                other_perc_key = f"other_bot_{perceived_id}_{other_bot_direction}"
+                if other_perc_key not in self.objective_values:
+                    self.objective_values[other_perc_key] = 0
+
+                # Neutral-to-slightly-positive learning from social contact
+                # (not as rewarding as self-recognition, but valuable)
+                self.objective_values[other_perc_key] += 0.3
+
+                # Cap to prevent obsession
+                if self.objective_values[other_perc_key] > 5.0:
+                    self.objective_values[other_perc_key] = 5.0
+
+            else:
+                # This would be a bug - two bots shouldn't have same ID
+                self.last_inference_info = {
+                    "type": "ERROR",
+                    "details": "ID collision detected!",
+                }
+
         # 2. Spatial map update (GL5: with maze_id for multi-maze support)
         maze_id = (
             getattr(getattr(self, "environment", None), "maze_id", "default")
@@ -829,20 +911,20 @@ class Learner:
 
     def sleep_cycle(self):
         """
-        The consolidation phase — memory reprocessing during downtime.
+        The consolidation phase -- memory reprocessing during downtime.
 
         Called when the robot's battery is low and movement ceases.
         Triggers the 'systems consolidation' process analogous to
         slow-wave sleep in biological brains:
 
         1. DECAY (Synaptic downscaling)
-        ─────────────────────────────────
+        ---------------------------------
         All rule weights are multiplied by their decay rate. This
         models the brain's selective weakening of unused synapses
         during sleep, making room for new learning.
 
         Biological analogue: The 'synaptic homeostasis hypothesis'
-        — Tononi & Pedersen (2003) argue that sleep downscales
+        -- Tononi & Pedersen (2003) argue that sleep downscales
         the entire synaptic network, compensating for the day's
         net synaptic strengthening.
 
@@ -850,9 +932,9 @@ class Learner:
         consolidation. Nature, 425, 594-595.
 
         2. MACRO INDUCTION (Chunk formation)
-        ───────────────────────────────────
+        -----------------------------------
         Repeated command sequences are collapsed into single macro
-        actions. Models the basal ganglia's habit formation —
+        actions. Models the basal ganglia's habit formation --
         converting multi-step deliberative sequences into automatic
         motor programmes.
 
@@ -860,22 +942,22 @@ class Learner:
         evaluative brain. Annual Review of Neuroscience, 31, 359-387.
 
         3. CONSOLIDATION (Episodic → Semantic)
-        ─────────────────────────────────────────
+        -----------------------------------------
         Episodic traces are strengthened into semantic rules. High-
         reward episodes are additionally promoted to semantic storage.
-        Models the hippocampal-neocortical dialogue during sleep —
+        Models the hippocampal-neocortical dialogue during sleep --
         the 'replay' of day's events that consolidates them into
         long-term memory.
 
         Reference: Rasch, B. & Born, J. (2013). About sleep's role
         in memory. Physiological Reviews, 93(2), 681-766.
 
-        4. RFT DERIVATION (GL5 — Abstract inference)
-        ─────────────────────────────────────────────
+        4. RFT DERIVATION (GL5 -- Abstract inference)
+        ---------------------------------------------
         Runs the Relational Frame Theory engine to detect new
         coordinations, derive transitive relationships, and apply
         transformation of functions. This is the 'dreaming' phase
-        in GL5 — abstract relational reasoning occurring during
+        in GL5 -- abstract relational reasoning occurring during
         the consolidation window.
 
         Reference: Hayes, S.C. et al. (2001). Relational Frame Theory.
@@ -981,13 +1063,13 @@ class Learner:
         Detects behavioural loops and flags for intervention.
 
         Monitors three indicators of pathological behaviour:
-        1. Static position — not moving despite repeated action
-        2. Oscillation — cycling between two positions
-        3. Action obsession — repeatedly executing same action
+        1. Static position -- not moving despite repeated action
+        2. Oscillation -- cycling between two positions
+        3. Action obsession -- repeatedly executing same action
 
         When detected, the system shifts to exploration mode,
         analogous to the brain's dopamine-mediated response to
-        prediction error — trying something new because the
+        prediction error -- trying something new because the
         expected reward is not occurring.
 
         Biological analogue: The mesolimbic dopamine pathway's

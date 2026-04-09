@@ -69,6 +69,9 @@ WALL_ID = 2
 MIRROR_ID = 3
 """GL5: Identifier for mirror (self-recognition surface)."""
 
+RESET_BUTTON_ID = 4
+"""GL5 Dual-Bot: Identifier for maze reset tile (psychosis cure)."""
+
 # ====================
 # Robot Directions
 # ====================
@@ -387,3 +390,13 @@ Two concepts must be associated with the same action in at least
 #
 # Reference: Sutton, R.S. & Barto, A.G. (2018). Reinforcement Learning:
 # An Introduction. MIT Press. Chapter 3.
+
+# ====================
+# GL5 Dual-Bot Physical Interaction Constants
+# ====================
+
+IMPACT_UNITS = 5
+"""
+GL5 Dual-Bot: Energy penalty for collision between bots.
+Both attacker and defender receive this penalty on impact.
+"""

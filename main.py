@@ -9,6 +9,7 @@ from environment import Environment
 from robot import Robot
 from memory import Memory
 from learner import Learner
+from experiment_logger import ExperimentLogger
 import graphics
 from graphics import (
     Button,
@@ -17,6 +18,7 @@ from graphics import (
     create_battery_icon,
     create_wall_icon,
     create_mirror_icon,
+    create_reset_button_icon,
 )
 
 
@@ -35,9 +37,33 @@ class GeneralLearnerApp:
 
         # Initialize Core Components
         self.env = Environment()
-        self.memory = Memory()
-        self.robot = Robot(self.env)
-        self.learner = Learner(self.memory, self.env)
+
+        # Bot 1 (primary) - starts at center
+        self.memory_bot1 = Memory("bot1_memory.db")
+        self.robot1 = Robot(self.env, self_id=1)
+        self.robot1.x = GRID_W // 2
+        self.robot1.y = GRID_H // 2
+        self.learner1 = Learner(self.memory_bot1, self.env)
+
+        # Bot 2 (dual-bot) - starts offset from center to respect Pauli Exclusion
+        self.memory_bot2 = Memory("bot2_memory.db")
+        self.robot2 = Robot(self.env, self_id=2)
+        self.robot2.x = GRID_W // 2
+        self.robot2.y = GRID_H // 2 + 1  # Offset by 1 tile
+        self.learner2 = Learner(self.memory_bot2, self.env)
+
+        # Active bot selector
+        self.active_bot = 1  # 1 or 2
+
+        # Per-bot step tracking for experimental framework
+        self.bot1_steps = 0
+        self.bot2_steps = 0
+
+        # GL5 Dual-Bot: Experimental framework logger (Spec 5)
+        self.experiment_logger = ExperimentLogger()
+
+        # Helper properties for active bot access
+        self.last_action_reward = 0
 
         self.autonomous = False
         self.guide_mode = False
@@ -49,9 +75,14 @@ class GeneralLearnerApp:
 
         # Load Graphical Assets (Procedural Bitmaps)
         self.robot_img = create_robot_icon(CELL_SIZE)
+        self.robot1_img = create_robot_icon(
+            CELL_SIZE, (50, 100, 200)
+        )  # Bot 1: darker blue
+        self.robot2_img = create_robot_icon(CELL_SIZE, (200, 100, 50))  # Bot 2: orange
         self.battery_img = create_battery_icon(CELL_SIZE)
         self.wall_img = create_wall_icon(CELL_SIZE)
         self.mirror_img = create_mirror_icon(CELL_SIZE)
+        self.reset_button_img = create_reset_button_icon(CELL_SIZE)
 
         self.last_action_reward = 0
         self.timer = 0
@@ -132,10 +163,40 @@ class GeneralLearnerApp:
         self.btn_reset_stagnation = Button(
             btn_x, y_off, btn_w, BTN_HEIGHT, "RESET STAGNATION", PINK
         )
+        y_off += step_y
+
+        # GL5 Dual-Bot: Bot Selector Buttons (spec 4)
+        self.btn_bot1 = Button(btn_x, y_off, btn_w // 2 - 5, BTN_HEIGHT, "BOT 1", GRAY)
+        self.btn_bot2 = Button(
+            btn_x + btn_w // 2 + 5, y_off, btn_w // 2 - 5, BTN_HEIGHT, "BOT 2", GRAY
+        )
 
         # UI States
         self.show_pov = False
         self.show_inferences = False
+
+    @property
+    def robot(self):
+        """Returns the active robot based on active_bot selection."""
+        return self.robot1 if self.active_bot == 1 else self.robot2
+
+    @property
+    def memory(self):
+        """Returns the active memory based on active_bot selection."""
+        return self.memory_bot1 if self.active_bot == 1 else self.memory_bot2
+
+    @property
+    def learner(self):
+        """Returns the active learner based on active_bot selection."""
+        return self.learner1 if self.active_bot == 1 else self.learner2
+
+    def get_active_robot(self):
+        """Returns the active robot instance (for direct access)."""
+        return self.robot1 if self.active_bot == 1 else self.robot2
+
+    def get_other_robot(self):
+        """Returns the other robot instance (for physics interaction)."""
+        return self.robot2 if self.active_bot == 1 else self.robot1
 
     def run(self):
         """Standard PyGame simulation loop."""
@@ -237,6 +298,20 @@ class GeneralLearnerApp:
                     self.learner.agenda.clear()
                     print("Stagnation reset! Robot is free to move again.")
 
+                # GL5 Dual-Bot: Bot selector buttons (Spec 4)
+                if self.btn_bot1.is_clicked(event.pos):
+                    self.active_bot = 1
+                    self._cache_rules = None
+                    self._cache_frames = None
+                    self._cache_graph = None
+                    print("Switched to Bot 1")
+                elif self.btn_bot2.is_clicked(event.pos):
+                    self.active_bot = 2
+                    self._cache_rules = None
+                    self._cache_frames = None
+                    self._cache_graph = None
+                    print("Switched to Bot 2")
+
                 # Grid interaction (Guide Mode)
                 if pos[0] < CANVAS_WIDTH and pos[1] < CANVAS_HEIGHT:
                     gx, gy = pos[0] // CELL_SIZE, pos[1] // CELL_SIZE
@@ -255,18 +330,50 @@ class GeneralLearnerApp:
         else:
             self.learner._guided_this_step = False
 
-        state = self.robot.get_state()
+        other_robot = self.robot2 if self.active_bot == 1 else self.robot1
+        state = self.robot.get_state(other_robot)
 
         # Determine action: either the user-forced one (Guided) or the learner's act
         if forced_action is not None:
             action = forced_action
         else:
-            action = self.learner.act(self.robot, text_command=text_cmd)
+            action = self.learner.act(
+                self.robot, text_command=text_cmd, other_bot=other_robot
+            )
 
-        reward = self.robot.step(action)
+        reward = self.robot.step(action, other_robot)
+
+        # GL5 Dual-Bot: Check if all batteries consumed → spawn reset button
+        if self.env.count_batteries() == 0 and self.env.reset_button_pos is None:
+            self.env.spawn_reset_button()
+
+        # GL5 Dual-Bot: Check if robot stepped on reset button → respawn batteries
+        current_tile = self.env.get_at(self.robot.x, self.robot.y)
+        if current_tile == RESET_BUTTON_ID:
+            self.env.respawn_batteries()
+            print("Maze reset! Batteries respawned.")
+            # GL5 Dual-Bot: Log reset trigger (Spec 5)
+            self.experiment_logger.log_reset_trigger()
+
+        # GL5 Dual-Bot: Log battery collection (Spec 5)
+        if current_tile == BATTERY_ID:
+            active_robot = self.robot1 if self.active_bot == 1 else self.robot2
+            self.experiment_logger.log_battery_collected(active_robot.self_id)
+
+        # GL5 Dual-Bot: Log collision events in manual mode (Spec 3 & 5)
+        if getattr(self.robot, "last_collision", False):
+            self.experiment_logger.log_collision(self.active_bot, -IMPACT_UNITS)
+            self.experiment_logger.log_energy_delta(self.active_bot, -IMPACT_UNITS)
+
+        # GL5 Dual-Bot: Log proximity events (within 2 tiles)
+        dist = abs(self.robot.x - other_robot.x) + abs(self.robot.y - other_robot.y)
+        if dist <= 2:
+            self.experiment_logger.log_proximity_event(self.active_bot, dist)
 
         # 3. USE THE NEW AGNOSTIC LEARNING FLOW
-        self.learner.learn(self.robot, action, reward, text_command=text_cmd)
+        self.learner.learn(
+            self.robot, action, reward, text_command=text_cmd, other_bot=other_robot
+        )
 
         self.last_action_reward = reward
         self.guide_path = []
@@ -278,6 +385,60 @@ class GeneralLearnerApp:
         # Synchronize stats for reports
         if self.total_steps % 5 == 0:
             self.capture_stats()
+
+    def _execute_bot_step(self, bot_id):
+        """
+        Executes a step for a specific bot in autonomous mode.
+
+        Args:
+            bot_id: 1 or 2, indicating which bot to step
+        """
+        robot = self.robot1 if bot_id == 1 else self.robot2
+        other_robot = self.robot2 if bot_id == 1 else self.robot1
+        memory = self.memory_bot1 if bot_id == 1 else self.memory_bot2
+        learner = self.learner1 if bot_id == 1 else self.learner2
+
+        # Get action from learner (pass other_bot for collision-aware perception)
+        action = learner.act(robot, other_bot=other_robot)
+
+        # Execute step with other bot for collision detection (Pauli Exclusion)
+        reward = robot.step(action, other_robot)
+
+        # GL5 Dual-Bot: Check if all batteries consumed → spawn reset button
+        if self.env.count_batteries() == 0 and self.env.reset_button_pos is None:
+            self.env.spawn_reset_button()
+
+        # GL5 Dual-Bot: Check if robot stepped on reset button → respawn batteries
+        current_tile = self.env.get_at(robot.x, robot.y)
+        if current_tile == RESET_BUTTON_ID:
+            self.env.respawn_batteries()
+            print(f"Bot {bot_id} triggered maze reset! Batteries respawned.")
+            # GL5 Dual-Bot: Log reset trigger (Spec 5)
+            self.experiment_logger.log_reset_trigger()
+
+        # GL5 Dual-Bot: Log battery collection (Spec 5)
+        if current_tile == BATTERY_ID:
+            self.experiment_logger.log_battery_collected(robot.self_id)
+
+        # GL5 Dual-Bot: Log collision events (Spec 3 & 5)
+        if getattr(robot, "last_collision", False):
+            self.experiment_logger.log_collision(bot_id, -IMPACT_UNITS)
+            self.experiment_logger.log_energy_delta(bot_id, -IMPACT_UNITS)
+
+        # GL5 Dual-Bot: Log proximity events (within 2 tiles)
+        dist = abs(robot.x - other_robot.x) + abs(robot.y - other_robot.y)
+        if dist <= 2:
+            self.experiment_logger.log_proximity_event(bot_id, dist)
+
+        # Learn
+        learner.learn(robot, action, reward, other_bot=other_robot)
+
+        # Update step counts
+        if bot_id == 1:
+            self.bot1_steps += 1
+        else:
+            self.bot2_steps += 1
+        self.total_steps += 1
 
     def capture_stats(self):
         """Records current metrics for the reporting dashboard."""
@@ -498,14 +659,18 @@ class GeneralLearnerApp:
         if self.autonomous:
             self.timer += dt
             if self.timer >= self.step_delay:
-                self.execute_step()
+                # GL5 Dual-Bot: Both bots take turns in autonomous mode
+                # Execute step for both bots each cycle
+                self._execute_bot_step(1)
+                self._execute_bot_step(2)
+                # Note: Display stays on manually selected bot (no auto-switch)
                 self.timer = 0
 
         # Decrement dream cooldown
         if self._dream_cooldown > 0:
             self._dream_cooldown -= 1
 
-        # Homeostasis check: If tired, robot must sleep (dream phase)
+        # Homeostasis check: If tired, active robot must sleep (dream phase)
         if self.robot.tiredness >= TIREDNESS_MAX and self._dream_cooldown == 0:
             print(
                 "Homeostasis Alert: Robot is exhausted. Triggering automatic Sleep phase..."
@@ -537,16 +702,21 @@ class GeneralLearnerApp:
                     self.screen.blit(self.battery_img, rect)
                 elif val == MIRROR_ID:
                     self.screen.blit(self.mirror_img, rect)
+                elif val == RESET_BUTTON_ID:
+                    self.screen.blit(self.reset_button_img, rect)
 
-        # 2. Render Robot (with rotation based on direction)
-        rob_rect = pygame.Rect(
-            self.robot.x * CELL_SIZE, self.robot.y * CELL_SIZE, CELL_SIZE, CELL_SIZE
-        )
+        # 2. Render Robot 1 (with rotation based on direction)
+        r1 = self.robot1
+        r1_rect = pygame.Rect(r1.x * CELL_SIZE, r1.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         rot_deg = {DIR_N: 0, DIR_E: -90, DIR_S: 180, DIR_W: 90}
-        rotated_rob = pygame.transform.rotate(
-            self.robot_img, rot_deg[self.robot.direction]
-        )
-        self.screen.blit(rotated_rob, rob_rect)
+        rotated_r1 = pygame.transform.rotate(self.robot1_img, rot_deg[r1.direction])
+        self.screen.blit(rotated_r1, r1_rect)
+
+        # 2b. Render Robot 2 (with rotation based on direction)
+        r2 = self.robot2
+        r2_rect = pygame.Rect(r2.x * CELL_SIZE, r2.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+        rotated_r2 = pygame.transform.rotate(self.robot2_img, rot_deg[r2.direction])
+        self.screen.blit(rotated_r2, r2_rect)
 
         # 3. Sidebar Surface
         pygame.draw.rect(
@@ -570,6 +740,12 @@ class GeneralLearnerApp:
         self.btn_new_maze.draw(self.screen)
         self.btn_reset_stagnation.draw(self.screen)
 
+        # GL5 Dual-Bot: Bot selector buttons (Spec 4)
+        self.btn_bot1.color = LIGHT_ORANGE if self.active_bot == 1 else GRAY
+        self.btn_bot2.color = LIGHT_ORANGE if self.active_bot == 2 else GRAY
+        self.btn_bot1.draw(self.screen)
+        self.btn_bot2.draw(self.screen)
+
         # 3. Cognitive Dashboard
         self.draw_reports()
 
@@ -579,7 +755,13 @@ class GeneralLearnerApp:
             rep_w = REPORT_WIDTH - 30
             pov_rect = pygame.Rect(rep_x + rep_w + 10, 60, POV_WIDTH, POV_HEIGHT)
             graphics.draw_raycast_view(
-                self.screen, pov_rect, self.robot, self.env, self.learner
+                self.screen,
+                pov_rect,
+                self.robot,
+                self.env,
+                self.learner,
+                other_bot=self.robot2 if self.active_bot == 1 else self.robot1,
+                active_bot=self.active_bot,
             )
 
         # 4. HUD Stats & Agenda (with caching - only update when needed)
@@ -594,7 +776,9 @@ class GeneralLearnerApp:
         bayes_status = "ENABLED" if self.learner.bayesian else "DISABLED"
         auto_status = "AUTO" if self.autonomous else "MANUAL"
         guide_status = "GUIDE" if self.guide_mode else "FREE"
-        stats = f"Score: {self.robot.score} | Rules: {rules_count} | BAYES: {bayes_status} | {auto_status} | {guide_status} | RFT: {rft_count}"
+
+        # GL5 Dual-Bot: Include bot ID in stats
+        stats = f"Bot{self.active_bot} | Score: {self.robot.score} | Rules: {rules_count} | BAYES: {bayes_status} | {auto_status} | {guide_status} | RFT: {rft_count}"
         stat_surf = self.font.render(stats, True, BLACK)
         self.screen.blit(stat_surf, (CANVAS_WIDTH + 10, WINDOW_HEIGHT - 70))
 

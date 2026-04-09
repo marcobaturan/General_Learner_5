@@ -10,9 +10,22 @@ class Robot:
 
     GL5: Has autobiographical memory with unique self-identity (2-digit ID).
     Implements self-recognition capability (mirror test).
+
+    GL5.1 Dual-Bot Physical Interaction Principles:
+    -----------------------------------------------
+    1. Pauli Exclusion: Two bots cannot occupy same tile. Movement blocked.
+    2. Pain on Impact: Collision triggers -IMPACT_UNITS energy penalty to both.
+    3. Mutual Recognition: Each bot has self_id for differentiating self from other.
+
+    The collision detection system implements fundamental physics of agent interaction,
+    creating emergent avoidance behavior without explicit "avoid other bot" programming.
+
+    Attributes:
+        self_id: Unique identifier (1 or 2) for mutual recognition
+        last_collision: Flag for learning from collision events
     """
 
-    def __init__(self, env):
+    def __init__(self, env, self_id=None):
         self.env = env
         self.reset()
         self.score = 0
@@ -22,18 +35,25 @@ class Robot:
 
         # GL5: Autobiographical memory - unique self-identity
         # Generated once per robot instance, persists across sessions
-        self.self_id = random.randint(*SELF_ID_RANGE)
+        # GL5 Dual-Bot: Use provided self_id or generate new
+        if self_id is not None:
+            self.self_id = self_id
+        else:
+            self.self_id = random.randint(*SELF_ID_RANGE)
 
     def reset(self):
         """Positions the robot back in the center of the world."""
         self.x = GRID_W // 2
         self.y = GRID_H // 2
         self.direction = DIR_N
+        self.last_collision = False
 
-    def get_state(self):
+    def get_state(self, other_bot=None):
         """
         Returns the robot's complete current 'Situation', including
         raw numerical sensory data for the Fuzzy Logic layer.
+
+        GL5 Dual-Bot: other_bot parameter enables mutual recognition.
         """
         raw_distances = {
             "N": self._dist_to_wall(DIR_N),
@@ -48,10 +68,13 @@ class Robot:
         return {
             "pos": (self.x, self.y),
             "dir": self.direction,
-            "perception": self.env.get_perception_at(self.x, self.y, self.direction),
+            "perception": self.env.get_perception_at(
+                self.x, self.y, self.direction, other_bot
+            ),
             "raw_distances": raw_distances,
             "batt_distance": batt_dist,
             "needs": {"hunger": self.hunger, "tiredness": self.tiredness},
+            "self_id": self.self_id,
         }
 
     def _dist_to_wall(self, direction):
@@ -86,11 +109,15 @@ class Robot:
                         found = True
         return min_dist if found else None
 
-    def step(self, action):
+    def step(self, action, other_bot=None):
         """
         Executes a discrete motor command and returns its reinforcement value.
         Actions: 0:Turn Left, 1:Turn Right, 2:Move Forward, 3:Move Backward
+
+        GL5 Dual-Bot: other_bot parameter enables collision detection.
         """
+        from constants import IMPACT_UNITS
+
         reward = -1  # Small penalty per step to encourage efficiency
         self.hunger += 1
         self.tiredness += 1
@@ -100,11 +127,11 @@ class Robot:
         elif action == 1:  # Turn Right
             self.direction = (self.direction + 1) % 4
         elif action == 2:  # Move Forward
-            self.move_forward()
+            reward = self.move_forward(other_bot)
         elif action == 3:  # Move Backward
-            self.move_backward()
+            reward = self.move_backward(other_bot)
 
-        # Check current cell for objects (Batteries)
+        # Check current cell for objects (Batteries, Reset Button)
         obj = self.env.get_at(self.x, self.y)
         if obj == BATTERY_ID:
             reward = 10  # Positive reinforcement
@@ -114,8 +141,10 @@ class Robot:
 
         return reward
 
-    def move_forward(self):
+    def move_forward(self, other_bot=None):
         """Attempts to move in the current facing direction."""
+        from constants import IMPACT_UNITS, WALL_ID
+
         nx, ny = self.x, self.y
         if self.direction == DIR_N:
             ny -= 1
@@ -127,11 +156,34 @@ class Robot:
             nx -= 1
 
         # Collision detection: Walls prevent movement
-        if self.env.get_at(nx, ny) != WALL_ID:
-            self.x, self.y = nx, ny
+        target_obj = self.env.get_at(nx, ny)
 
-    def move_backward(self):
+        # GL5 Dual-Bot: Pauli Exclusion - check for other bot
+        collision = False
+        impact_penalty = 0
+        if other_bot is not None:
+            if nx == other_bot.x and ny == other_bot.y:
+                collision = True
+                impact_penalty = IMPACT_UNITS
+                # Record collision event for learning
+                self.last_collision = True
+                other_bot.last_collision = True
+
+        if collision:
+            # Pain on impact: both bots receive penalty
+            return -1 - impact_penalty
+        elif target_obj != WALL_ID:
+            self.x, self.y = nx, ny
+            return -1
+
+        # No collision
+        self.last_collision = False
+        return -1  # Wall hit
+
+    def move_backward(self, other_bot=None):
         """Attempts to move opposite to the current facing direction."""
+        from constants import IMPACT_UNITS, WALL_ID
+
         nx, ny = self.x, self.y
         if self.direction == DIR_N:
             ny += 1
@@ -142,8 +194,22 @@ class Robot:
         elif self.direction == DIR_W:
             nx += 1
 
-        if self.env.get_at(nx, ny) != WALL_ID:
+        # GL5 Dual-Bot: Pauli Exclusion - check for other bot
+        collision = False
+        impact_penalty = 0
+        if other_bot is not None:
+            if nx == other_bot.x and ny == other_bot.y:
+                collision = True
+                impact_penalty = IMPACT_UNITS
+
+        target_obj = self.env.get_at(nx, ny)
+        if collision:
+            return -1 - impact_penalty
+        elif target_obj != WALL_ID:
             self.x, self.y = nx, ny
+            return -1
+
+        return -1
 
     def get_action_to(self, target_x, target_y):
         """

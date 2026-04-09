@@ -5,12 +5,12 @@ from constants import *
 _pygame_init = hasattr(pygame, "init")
 
 
-def create_robot_icon(size):
+def create_robot_icon(size, color=BLUE):
     icon = pygame.Surface((size, size), pygame.SRCALPHA)
     # Body
-    pygame.draw.rect(icon, BLUE, (size // 4, size // 4, size // 2, size // 2))
+    pygame.draw.rect(icon, color, (size // 4, size // 4, size // 2, size // 2))
     # Head
-    pygame.draw.rect(icon, BLUE, (size // 3, size // 8, size // 3, size // 4))
+    pygame.draw.rect(icon, color, (size // 3, size // 8, size // 3, size // 4))
     # Eyes
     pygame.draw.circle(icon, WHITE, (size // 3 + 2, size // 8 + 4), 2)
     pygame.draw.circle(icon, WHITE, (size // 3 * 2 - 2, size // 8 + 4), 2)
@@ -54,6 +54,20 @@ def create_mirror_icon(size):
     pygame.draw.rect(icon, (220, 180, 240), (0, 0, size, size), 2)
     # Add "shiny" diagonal line
     pygame.draw.line(icon, (255, 255, 255), (size // 4, 0), (size, size * 3 // 4), 1)
+    return icon
+
+
+def create_reset_button_icon(size):
+    """Creates a bright green reset button icon (psychosis cure tile)."""
+    icon = pygame.Surface((size, size))
+    # Bright green fill (distinct from battery green)
+    icon.fill((50, 200, 50))
+    # Darker green border
+    pygame.draw.rect(icon, (30, 150, 30), (0, 0, size, size), 3)
+    # Center circle (button appearance)
+    pygame.draw.circle(icon, (30, 150, 30), (size // 2, size // 2), size // 4)
+    # Inner circle
+    pygame.draw.circle(icon, (80, 220, 80), (size // 2, size // 2), size // 6)
     return icon
 
 
@@ -330,10 +344,17 @@ def draw_situational_network(
         )
 
 
-def draw_raycast_view(screen, rect, robot, env, learner=None):
+def draw_raycast_view(
+    screen, rect, robot, env, learner=None, other_bot=None, active_bot=1
+):
     """
     Renders a pseudo-3D scene using Ray Casting from the robot's perspective.
     GL5: Shows mirror reflection with robot's self-ID when facing mirror.
+    GL5 Dual-Bot: Shows other robot in perspective-appropriate colors.
+
+    Color Logic:
+    - Bot viewing POV sees itself in its own color in mirror
+    - Other robot appears in the opposite bot's color (blue/orange)
     """
     import math
 
@@ -400,7 +421,11 @@ def draw_raycast_view(screen, rect, robot, env, learner=None):
             # Boundary/Collision check
             if 0 <= rx < GRID_W and 0 <= ry < GRID_H:
                 obj = env.get_at(int(rx), int(ry))
-                if obj == WALL_ID or obj == BATTERY_ID:
+                # GL5 Dual-Bot: Check for other robot
+                if other_bot and int(rx) == other_bot.x and int(ry) == other_bot.y:
+                    hit = True
+                    hit_obj = 99  # Other bot ID
+                elif obj == WALL_ID or obj == BATTERY_ID:
                     hit = True
                     hit_obj = obj
                     # Side detection (simple fractional check)
@@ -445,6 +470,18 @@ def draw_raycast_view(screen, rect, robot, env, learner=None):
             # Mirror shows reflection - simplified blue/purple tint
             mirror_color = (100, 80, 150)
             color = mirror_color
+        elif hit_obj == 99:
+            # GL5 Dual-Bot: Other robot appears in opposite color to viewer
+            # If active_bot is 1 (blue), other appears orange; if 2 (orange), appears blue
+            if active_bot == 1:
+                other_color = (
+                    brightness,
+                    brightness // 2,
+                    0,
+                )  # Orange for bot1 viewing
+            else:
+                other_color = (0, brightness // 2, brightness)  # Blue for bot2 viewing
+            color = other_color
 
         # Draw filled rectangle for the column
         pygame.draw.rect(
@@ -465,9 +502,18 @@ def draw_raycast_view(screen, rect, robot, env, learner=None):
             ref_w = 60
             ref_h = 70
 
-            # Reflection body - front face of cube
-            pygame.draw.rect(screen, (80, 80, 120), (ref_x, ref_y, ref_w, ref_h))
-            pygame.draw.rect(screen, (120, 120, 180), (ref_x, ref_y, ref_w, ref_h), 2)
+            # Reflection body - color matches the viewing robot (self-recognition)
+            if active_bot == 1:
+                # Bot 1 sees itself as blue
+                reflection_body = (50, 80, 150)
+                reflection_border = (80, 120, 200)
+            else:
+                # Bot 2 sees itself as orange
+                reflection_body = (150, 80, 30)
+                reflection_border = (200, 120, 50)
+
+            pygame.draw.rect(screen, reflection_body, (ref_x, ref_y, ref_w, ref_h))
+            pygame.draw.rect(screen, reflection_border, (ref_x, ref_y, ref_w, ref_h), 2)
 
             # Two white eyes
             eye_y = ref_y + 20
