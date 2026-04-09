@@ -5,6 +5,42 @@ from constants import *
 # Check if pygame is initialized (for testing without display)
 _pygame_init = hasattr(pygame, "init")
 
+# SURFACES: Load Doom textures ONCE at module load (not every frame)
+_doom_textures = None
+_default_tex_index = 0
+
+
+def _load_doom_textures():
+    """Load Doom wall textures once at startup."""
+    global _doom_textures
+    _doom_textures = []
+    try:
+        assets_path = os.path.join(os.path.dirname(__file__), "assets")
+        for tex_num in range(1, 6):
+            tex_path = os.path.join(assets_path, f"{tex_num}.png")
+            tex = pygame.image.load(tex_path)
+            # Store as list of color rows for fast lookup
+            tex_data = []
+            for y in range(tex.get_height()):
+                row = []
+                for x in range(tex.get_width()):
+                    pixel = tex.get_at((x, y))
+                    # Convert to grayscale brightness
+                    brightness = int(
+                        0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2]
+                    )
+                    row.append(brightness)
+                tex_data.append(row)
+            _doom_textures.append(tex_data)
+        print(f"Loaded {_doom_textures.__len__()} Doom textures")
+    except Exception as e:
+        print(f"Could not load Doom textures: {e}")
+        _doom_textures = None
+
+
+# Load textures at module import
+_load_doom_textures()
+
 
 def create_robot_icon(size, color=BLUE):
     icon = pygame.Surface((size, size), pygame.SRCALPHA)
@@ -502,22 +538,39 @@ def draw_raycast_view(
         wall_brightness = brightness
         # Texture coordinate based on wall position and side
         if hit_obj == WALL_ID:
-            # Calculate texture coordinate properly
-            # Texture X = fractional part of hit position
             if _doom_textures is not None:
-                # Use Doom textures
+                # Wolfenstein-style texture coordinate
+                # texture_offset is the position within the wall texture (0-1 range)
+                # Use fractional part of hit position
                 if hit_side == 0:
-                    # Vertical wall - use Y fractional for tex Y, X for tex X
-                    tex_x = int((ry - int(ry)) * 256) % 256
-                    tex_y = int((rx - int(rx)) * 256) % 256
+                    # Hit vertical wall side - texture Y based on Y position
+                    tex_frac = ry - int(ry)
+                    if cos_a > 0:  # Facing east
+                        tex_offset = tex_frac
+                    else:  # Facing west
+                        tex_offset = 1 - tex_frac
                 else:
-                    # Horizontal wall
-                    tex_x = int((rx - int(rx)) * 256) % 256
-                    tex_y = int((ry - int(ry)) * 256) % 256
+                    # Hit horizontal wall side - texture Y based on X position
+                    tex_frac = rx - int(rx)
+                    if sin_a > 0:  # Facing south
+                        tex_offset = 1 - tex_frac
+                    else:  # Facing north
+                        tex_offset = tex_frac
 
-                # Get pixel from texture (with bounds check)
+                # Convert to texture coordinates
                 tex_h = len(_doom_textures[_default_tex_index])
                 tex_w = len(_doom_textures[_default_tex_index][0]) if tex_h > 0 else 256
+                tex_y = int(tex_offset * tex_h) % tex_h
+
+                # For each vertical slice, we need varying X
+                # The texture X varies from 0 to tex_w across the wall
+                # We use the ray's position to vary it
+                if hit_side == 0:
+                    tex_x = int(ry * 16) % tex_w
+                else:
+                    tex_x = int(rx * 16) % tex_w
+
+                # Get pixel from texture
                 if tex_y < tex_h and tex_x < tex_w:
                     tex_val = _doom_textures[_default_tex_index][tex_y][tex_x]
                 else:
