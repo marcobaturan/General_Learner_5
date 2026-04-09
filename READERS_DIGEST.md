@@ -1,12 +1,12 @@
-# Reader's Digest: What's GL?
+# Reader's Digest: What's GL5.1?
 
-## 🤖 What is GL4/GL5?
+## 🤖 What is GL5.1?
 
-**General Learner 4/5** is a **virtual robot** that:
-- Lives in a 2D world (10x10 grid)
-- Must find batteries (charging stations) to survive
-- Learns from its experiences
-- Can work **autonomously** or with **human guidance**
+**General Learner 5.1** is a **dual-bot social interaction research platform** featuring:
+- **Two virtual robots** living in the same 2D maze (10x10 grid)
+- Each robot has **independent memory** (separate databases)
+- They can **see each other**, **collide**, and **learn from interaction**
+- Research platform for **emergent social behavior** — like Schelling's segregation or Axelrod's cooperation
 
 ---
 
@@ -268,4 +268,64 @@ When multiple robots exist:
 
 ---
 
-*This document is a simplified explanation for readers. For technical details, see the White Paper, README, and GL5_MEMORY_SPEC.md.*
+## 🤝 GL5.1: Dual-Bot Social Interaction (NEW!)
+
+### What is this?
+
+Two robots sharing one maze — each with their own brain (database). They can see each other, collide, and learn from interaction. This lets us study **emergent social behavior** using rules inspired by:
+
+| Researcher | Concept | What it means |
+|------------|---------|---------------|
+| **Thomas Schelling** | Segregation | Simple preferences → complex patterns |
+| **Robert Axelrod** | Cooperation | Tit-for-Tat strategy emerges |
+| **Craig Reynolds** | Boids | Flocking from 3 simple rules |
+| **Rodney Brooks** | Subsumption | Intelligence from reflexes |
+
+### The Three Physical Laws
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              GL5.1 PHYSICAL INTERACTION                      │
+├─────────────────────────────────────────────────────────────┤
+│  1. PAULI EXCLUSION                                          │
+│     → Two bots cannot occupy the same tile                  │
+│     → Movement blocked if other bot is there                 │
+│                                                              │
+│  2. PAIN ON IMPACT                                           │
+│     → Collision = -5 energy to BOTH bots                   │
+│     → Creates "ouch!" signal that bots learn to avoid       │
+│                                                              │
+│  3. MUTUAL RECOGNITION                                       │
+│     → Each bot has unique ID (Bot 1 or Bot 2)               │
+│     → Sees "OTHER" in perception → knows "not me"           │
+│     → Mirror = self, other bot = not-self                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### The Psychosis Cure (Reset Button)
+
+When a robot finds ALL batteries, the maze becomes empty — no goals left! This causes **TOC** (Touch-of-Contract): random movement, no learning.
+
+**Solution**: A green **RESET_BUTTON** appears when batteries = 0. Step on it → batteries respawn → endless search continues.
+
+### The Research Hypotheses
+
+| Hypothesis | What we expect to see |
+|------------|----------------------|
+| **H1** | Bots learn to avoid each other (competition) |
+| **H2** | Bots spread to opposite corners (territory) |
+| **H3** | No learning — random behavior persists |
+| **H4** | Implicit cooperation (one explores, one rests) |
+
+### Visual Features
+
+- **Maze**: Blue robot (Bot 1) + Orange robot (Bot 2)
+- **POV**: Each bot sees itself in its own color, other bot in opposite color
+- **Mirror**: Same color as self (self-recognition)
+
+---
+
+6. Schelling, T. (1971). The Strategy of Conflict. — Segregation models
+7. Axelrod, R. (1984). The Evolution of Cooperation. — Tit for Tat
+8. Reynolds, C. (1987). Flocks, Herds, and Schools. — Boids algorithm
+9. Brooks, R. (1991). Intelligence without representation. — Subsumption

@@ -351,12 +351,29 @@ def draw_raycast_view(
     Renders a pseudo-3D scene using Ray Casting from the robot's perspective.
     GL5: Shows mirror reflection with robot's self-ID when facing mirror.
     GL5 Dual-Bot: Shows other robot in perspective-appropriate colors.
+    SURFACES: Adds procedural brick texture to walls (Wolfenstein-style).
 
     Color Logic:
     - Bot viewing POV sees itself in its own color in mirror
     - Other robot appears in the opposite bot's color (blue/orange)
+
+    Texture Implementation (Wolfenstein-style):
+    - Vertical walls: use ray Y position for texture coordinate
+    - Horizontal walls: use ray X position for texture coordinate
+    - Procedural brick pattern via lookup table
     """
     import math
+
+    # SURFACES: Generate procedural brick texture lookup
+    # Creates a 256-entry lookup table for brick color variation
+    _brick_texture = []
+    for i in range(256):
+        # Base gray + brick pattern variation
+        base = 100 + (i % 32) * 3  # Varies every 32 pixels
+        # Add mortar lines (darker every 16 pixels)
+        if i % 16 < 2:
+            base -= 40  # Dark mortar
+        _brick_texture.append(base)
 
     pygame.draw.rect(screen, BLACK, rect)  # Ceiling/Background
 
@@ -462,6 +479,20 @@ def draw_raycast_view(
         brightness = max(0, 255 - int(dist * 20))
         if hit_side == 1:
             brightness = int(brightness * 0.7)  # Side-shading
+
+        # SURFACES: Apply brick texture to walls
+        # Texture coordinate based on wall position and side
+        if hit_obj == WALL_ID:
+            # Calculate texture coordinate
+            if hit_side == 0:
+                # Vertical wall - use Y coordinate
+                tex_coord = int((ry - int(ry)) * 256) % 256
+            else:
+                # Horizontal wall - use X coordinate
+                tex_coord = int((rx - int(rx)) * 256) % 256
+            # Apply texture variation
+            tex_brightness = _brick_texture[tex_coord]
+            brightness = int(brightness * tex_brightness / 150)
 
         color = (brightness, brightness, brightness)
         if hit_obj == BATTERY_ID:
