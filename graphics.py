@@ -360,29 +360,38 @@ def draw_raycast_view(
     Texture Implementation (Wolfenstein-style):
     - Vertical walls: use ray Y position for texture coordinate
     - Horizontal walls: use ray X position for texture coordinate
-    - Procedural brick pattern via lookup table
+    - Uses Doom textures loaded from assets (1.png to 5.png)
     """
     import math
 
-    # SURFACES: Generate procedural brick texture lookup
-    # Proper Wolfenstein-style texture: texture coordinate from hit position
-    _brick_texture = []
-    for i in range(256):
-        # Create brick pattern: horizontal mortar lines + vertical variation
-        # Each "brick" is 64x64 conceptually, repeated pattern
-        x = i % 64
-        y = i // 4  # Tiles every 4 for brick height
+    # SURFACES: Load Doom textures from assets folder
+    _doom_textures = []
+    try:
+        for tex_num in range(1, 6):
+            tex_path = os.path.join(
+                os.path.dirname(__file__), "..", "assets", f"{tex_num}.png"
+            )
+            tex = pygame.image.load(tex_path)
+            # Store as list of color rows for fast lookup
+            tex_data = []
+            for y in range(tex.get_height()):
+                row = []
+                for x in range(tex.get_width()):
+                    pixel = tex.get_at((x, y))
+                    # Convert to grayscale brightness
+                    brightness = int(
+                        0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2]
+                    )
+                    row.append(brightness)
+                tex_data.append(row)
+            _doom_textures.append(tex_data)
+    except Exception as e:
+        print(f"Could not load Doom textures: {e}")
+        # Fallback to procedural if textures not found
+        _doom_textures = None
 
-        # Horizontal mortar (every 8 pixels in the original texture)
-        if y % 8 < 1:
-            # Mortar line (dark gray)
-            base = 70
-        else:
-            # Brick surface with realistic variation
-            brick_offset = (y // 8) % 3  # 3 rows before pattern repeats
-            base = 110 + brick_offset * 15 + (x % 8) * 2
-
-        _brick_texture.append(max(50, min(180, base)))
+    # If textures loaded, select one as default (stone wall)
+    _default_tex_index = 0
 
     pygame.draw.rect(screen, BLACK, rect)  # Ceiling/Background
 
@@ -489,28 +498,46 @@ def draw_raycast_view(
         if hit_side == 1:
             brightness = int(brightness * 0.7)  # Side-shading
 
-        # SURFACES: Apply brick texture to walls
+        # SURFACES: Apply Doom texture to walls
         wall_brightness = brightness
         # Texture coordinate based on wall position and side
         if hit_obj == WALL_ID:
             # Calculate texture coordinate properly
             # Texture X = fractional part of hit position
-            if hit_side == 0:
-                # Hit vertical wall side - use Y for texture X
-                tex_x = int((ry - int(ry)) * 64)
+            if _doom_textures is not None:
+                # Use Doom textures
+                if hit_side == 0:
+                    # Vertical wall - use Y fractional for tex Y, X for tex X
+                    tex_x = int((ry - int(ry)) * 256) % 256
+                    tex_y = int((rx - int(rx)) * 256) % 256
+                else:
+                    # Horizontal wall
+                    tex_x = int((rx - int(rx)) * 256) % 256
+                    tex_y = int((ry - int(ry)) * 256) % 256
+
+                # Get pixel from texture (with bounds check)
+                tex_h = len(_doom_textures[_default_tex_index])
+                tex_w = len(_doom_textures[_default_tex_index][0]) if tex_h > 0 else 256
+                if tex_y < tex_h and tex_x < tex_w:
+                    tex_val = _doom_textures[_default_tex_index][tex_y][tex_x]
+                else:
+                    tex_val = 128
             else:
-                # Hit horizontal wall side - use X for texture X
-                tex_x = int((rx - int(rx)) * 64)
+                # Fallback to procedural
+                if hit_side == 0:
+                    tex_x = int((ry - int(ry)) * 64)
+                else:
+                    tex_x = int((rx - int(rx)) * 64)
 
-            # Texture coordinate from fractional position (proper Wolfenstein way)
-            tex_coord = (tex_x % 64) + (
-                (int(ry * 8) % 64) if hit_side == 0 else (int(rx * 8) % 64)
-            )
-            tex_coord = tex_coord % 256
+                tex_coord = (tex_x % 64) + (
+                    (int(ry * 8) % 64) if hit_side == 0 else (int(rx * 8) % 64)
+                )
+                tex_coord = tex_coord % 256
+                tex_val = (
+                    _brick_fallback[tex_coord] if "_brick_fallback" in dir() else 128
+                )
 
-            # Apply texture variation (scaled by distance)
-            tex_val = _brick_texture[tex_coord]
-            wall_brightness = max(0, min(255, (brightness * tex_val) // 120))
+            wall_brightness = max(0, min(255, (brightness * tex_val) // 128))
 
         color = (wall_brightness, wall_brightness, wall_brightness)
         if hit_obj == BATTERY_ID:
