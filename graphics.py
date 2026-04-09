@@ -365,32 +365,24 @@ def draw_raycast_view(
     import math
 
     # SURFACES: Generate procedural brick texture lookup
-    # Creates a 256-entry lookup table for brick color variation
-    # Improved: Real brick pattern with horizontal mortar lines
+    # Proper Wolfenstein-style texture: texture coordinate from hit position
     _brick_texture = []
     for i in range(256):
-        # Brick height = 8 pixels, mortar every 8 pixels (darker)
-        y = i % 16  # Position within brick row (16 pixels = 2 bricks of 8)
+        # Create brick pattern: horizontal mortar lines + vertical variation
+        # Each "brick" is 64x64 conceptually, repeated pattern
+        x = i % 64
+        y = i // 4  # Tiles every 4 for brick height
 
-        if y < 2:
-            # Mortar line (dark)
-            base = 60
+        # Horizontal mortar (every 8 pixels in the original texture)
+        if y % 8 < 1:
+            # Mortar line (dark gray)
+            base = 70
         else:
-            # Brick surface with variation
-            brick_row = (i // 16) % 4  # Every 4 rows, offset pattern changes
-            brick_offset = i % 8  # Within brick (8 pixels)
+            # Brick surface with realistic variation
+            brick_offset = (y // 8) % 3  # 3 rows before pattern repeats
+            base = 110 + brick_offset * 15 + (x % 8) * 2
 
-            if brick_row % 2 == 0:
-                # Normal row
-                base = 120 + brick_offset * 2
-            else:
-                # Offset row (staggered bricks)
-                base = 120 + ((brick_offset + 4) % 8) * 2
-
-            # Add subtle variation
-            base += (i % 5) * 3
-
-        _brick_texture.append(max(40, min(180, base)))
+        _brick_texture.append(max(50, min(180, base)))
 
     pygame.draw.rect(screen, BLACK, rect)  # Ceiling/Background
 
@@ -501,16 +493,24 @@ def draw_raycast_view(
         wall_brightness = brightness
         # Texture coordinate based on wall position and side
         if hit_obj == WALL_ID:
-            # Calculate texture coordinate
+            # Calculate texture coordinate properly
+            # Texture X = fractional part of hit position
             if hit_side == 0:
-                # Vertical wall - use Y coordinate
-                tex_coord = int((ry - int(ry)) * 256) % 256
+                # Hit vertical wall side - use Y for texture X
+                tex_x = int((ry - int(ry)) * 64)
             else:
-                # Horizontal wall - use X coordinate
-                tex_coord = int((rx - int(rx)) * 256) % 256
-            # Apply texture variation
-            tex_brightness = _brick_texture[tex_coord]
-            wall_brightness = max(0, min(255, int(brightness * tex_brightness / 150)))
+                # Hit horizontal wall side - use X for texture X
+                tex_x = int((rx - int(rx)) * 64)
+
+            # Texture coordinate from fractional position (proper Wolfenstein way)
+            tex_coord = (tex_x % 64) + (
+                (int(ry * 8) % 64) if hit_side == 0 else (int(rx * 8) % 64)
+            )
+            tex_coord = tex_coord % 256
+
+            # Apply texture variation (scaled by distance)
+            tex_val = _brick_texture[tex_coord]
+            wall_brightness = max(0, min(255, (brightness * tex_val) // 120))
 
         color = (wall_brightness, wall_brightness, wall_brightness)
         if hit_obj == BATTERY_ID:
